@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Thanh toán{% endblock %}
+{% block page_title %}Thanh toán chuyển khoản{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto grid md:grid-cols-[360px_1fr] gap-6">
+  <div class="card p-6 text-center h-fit">
+    <span class="pill bg-soft text-primary-dark">Mã QR chuyển khoản</span>
+    <div class="mt-4 rounded-2xl bg-white border border-line p-3 min-h-[260px] grid place-items-center">
+      <img src="{{ qr_url }}" alt="VietQR" class="w-full max-w-[280px]" onerror="this.parentElement.innerHTML='<p class=&quot;text-sm text-muted p-6&quot;>Không tải được mã QR (cần internet). Hãy chuyển khoản thủ công theo thông tin bên cạnh.</p>'"></div>
+    <p class="text-xs text-muted mt-3">Mở app ngân hàng → Quét QR. Nội dung chuyển khoản đã được điền sẵn.</p>
+  </div>
+  <div class="space-y-4">
+    <div class="card p-5 space-y-4">
+      <h3 class="font-head font-bold text-lg">{{ o.plan.name }}</h3>
+      {% for lbl, val, copy in (('Ngân hàng', cfg.BANK_ID, false), ('Số tài khoản', cfg.BANK_ACCOUNT, true), ('Chủ tài khoản', cfg.BANK_ACCOUNT_NAME, false), ('Số tiền', (o.amount|vnd) ~ 'đ', false), ('Nội dung chuyển khoản', o.transfer_code, true)) %}
+      <div class="flex items-center justify-between gap-3 text-sm"><span class="text-muted">{{ lbl }}</span>
+        <span class="flex items-center gap-2 font-semibold {{ 'font-mono bg-soft px-2 py-1 rounded-lg text-primary-dark' if lbl.startswith('Nội dung') }}">{{ val }}
+          {% if copy %}<button type="button" class="btn btn-ghost btn-sm" data-copy="{{ val }}"><span class="material-symbols-outlined text-[16px]">content_copy</span>Sao chép</button>{% endif %}</span></div>{% endfor %}
+      <div class="text-xs rounded-xl bg-amber-50 text-amber-800 p-3">⚠ Vui lòng giữ <b>đúng nội dung chuyển khoản</b> để Quản lý đối soát nhanh. Ngày tập sẽ được cộng dồn sau khi xác nhận.</div>
+    </div>
+    {% if o.status == 'pending' %}
+      <form method="post" action="{{ url_for('member.order_claim', oid=o.id) }}">{{ ui.csrf() }}<button class="btn btn-primary w-full py-3"><span class="material-symbols-outlined text-[20px]">paid</span>Tôi đã chuyển khoản</button></form>
+    {% else %}<div class="card p-4 text-center text-sm">Trạng thái đơn: <span class="pill {{ {'claimed':'bg-amber-100 text-amber-700','confirmed':'bg-emerald-100 text-emerald-700','rejected':'bg-red-100 text-red-700'}[o.status] }}">{{ {'claimed':'Chờ Quản lý xác nhận','confirmed':'Đã xác nhận','rejected':'Bị từ chối'}[o.status] }}</span></div>{% endif %}
+    <a href="{{ url_for('member.shop') }}" class="btn btn-outline w-full">← Quay lại chọn gói</a>
+  </div>
+</div>
+{% endblock %}

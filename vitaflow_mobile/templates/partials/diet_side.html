@@ -1,0 +1,32 @@
+{# Panel dinh dưỡng của hội viên (Manager xem, Coach xem + chấm điểm). Biến: peer, side, scoring #}
+{% import "partials/macros.html" as ui %}
+<div class="flex items-center gap-3">{{ ui.avatar(peer, 44) }}<div><div class="font-semibold">{{ peer.full_name }}</div>
+  <div class="flex gap-1.5 mt-1">{{ ui.rank_badge(side.rank.name) }}{{ ui.status_pill(side.status.gym.state) }}</div></div></div>
+
+<h4 class="mt-5 font-head font-bold flex items-center gap-2"><span class="material-symbols-outlined text-primary">restaurant_menu</span>Thực đơn AI hôm nay</h4>
+{% if side.menu_data %}
+  <div class="mt-2 space-y-2">
+    {% for k, label in MEAL_LABELS.items() %}<div class="text-sm"><b>{{ label }}:</b>
+      {% for i in side.menu_data.get(k, []) %}<span class="block text-muted">• {{ i.ten_mon }} · {{ i.calo|round|int }} kcal</span>{% endfor %}</div>{% endfor %}
+  </div>
+  <p class="text-xs text-muted mt-2"><b>Bài tập:</b> {{ side.menu.workout }}</p>
+{% else %}<p class="text-sm text-muted mt-2">Hội viên chưa tạo thực đơn hôm nay.</p>{% endif %}
+
+<h4 class="mt-5 font-head font-bold">Nhật ký bữa ăn</h4>
+<div class="mt-2 space-y-3">
+  {% for k, label in MEAL_LABELS.items() %}{% set l = side.meals.get(k) %}
+    <div class="rounded-xl border border-line p-3">
+      <div class="flex items-center justify-between text-sm"><b>{{ label }}</b>
+        {% if l and l.score %}<span class="pill bg-emerald-100 text-emerald-700">{{ l.score }}/10</span>
+        {% elif l and l.followed_ai %}<span class="pill bg-sky-100 text-sky-700">Ăn chuẩn AI</span>{% else %}<span class="text-xs text-muted">Chưa ghi nhận</span>{% endif %}</div>
+      {% if l and l.photo_url %}<a href="{{ l.photo_url }}" target="_blank"><img src="{{ l.photo_url }}" class="mt-2 rounded-lg max-h-32 w-full object-cover" alt="Mâm cơm"></a>{% endif %}
+      {% if scoring %}
+        <form method="post" action="{{ url_for('coach.meal_score', uid=peer.id, meal_key=k) }}" class="mt-2 flex gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="number" name="score" min="1" max="10" required placeholder="1-10" value="{{ l.score if l and l.score }}" class="input !w-16 !px-2 !py-1.5">
+          <input name="note" maxlength="300" placeholder="Nhận xét…" value="{{ l.coach_note or '' if l }}" class="input !py-1.5 flex-1">
+          <button class="btn btn-primary btn-sm">Chấm</button></form>{% endif %}
+    </div>
+  {% endfor %}
+</div>
+<div class="mt-4 text-xs text-muted">Số đo gần nhất: {{ side.body.last.weight_kg if side.body.last else '–' }}kg · eo {{ side.body.last.waist_cm if side.body.last else '–' }}cm</div>

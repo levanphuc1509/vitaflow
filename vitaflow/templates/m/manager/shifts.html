@@ -1,0 +1,48 @@
+{% extends "m/layout.html" %}
+{% block title %}Ca tập & Điểm danh{% endblock %}
+{% macro shift_form(s=None) %}
+  <input type="hidden" name="id" value="{{ s.id if s }}"><input type="hidden" name="branch_id" value="{{ sel_branch }}">
+  <div class="grid grid-cols-2 gap-3">
+    <div><label class="lbl">Tên ca</label><input name="name" class="input" required value="{{ s.name if s }}" placeholder="Ca 5"></div>
+    <div><label class="lbl">Sức chứa</label><input name="capacity" type="number" min="1" max="100" class="input" value="{{ s.capacity if s else 15 }}"></div>
+    <div><label class="lbl">Bắt đầu</label><input name="start" type="time" class="input" required value="{{ s.start.strftime('%H:%M') if s }}"></div>
+    <div><label class="lbl">Kết thúc</label><input name="end" type="time" class="input" required value="{{ s.end.strftime('%H:%M') if s }}"></div>
+    <div class="col-span-2"><label class="lbl">Nội dung buổi tập</label><input name="title" class="input" value="{{ s.title or '' if s }}"></div>
+    <div class="col-span-2"><label class="lbl">Coach phụ trách ca</label><div class="flex flex-wrap gap-2">{% for c in coaches %}<label class="flex items-center gap-2 border border-line rounded-full pl-2.5 pr-3 py-1.5 text-sm"><input type="checkbox" name="coach_ids" value="{{ c.id }}" {{ 'checked' if s and c in s.coaches }}>{{ c.first_name }}</label>{% endfor %}</div></div>
+  </div>
+{% endmacro %}
+{% block content %}
+<div class="flex items-center justify-between"><div><div class="text-xs font-bold uppercase tracking-wider text-primary-dark flex items-center gap-1"><span class="live-dot"></span>Trực tiếp</div><h1 class="font-head text-2xl font-extrabold">Giám sát ca trực</h1></div>
+  <button class="btn btn-primary btn-sm" data-modal-open="m-shift-new"><span class="material-symbols-outlined text-[18px]">add</span>Thêm ca</button></div>
+<div class="chips mt-3">
+  {% for s in shift_list %}{% set st = states[s.id] %}
+    <a href="{{ url_for('manager.shifts', shift=s.id) }}" class="card flex-none w-40 p-3 {{ 'ring-2 ring-primary bg-soft/60' if sel and sel.id == s.id }}">
+      <div class="flex items-center justify-between"><b>{{ s.name }}</b><span class="pill {{ {'live':'bg-red-100 text-red-600','done':'bg-slate-100 text-slate-600','upcoming':'bg-amber-100 text-amber-700'}[st] }}">{% if st == 'live' %}<span class="live-dot"></span>{% endif %}{{ {'live':'Live','done':'Xong','upcoming':'Sắp tới'}[st] }}</span></div>
+      <div class="text-xs text-muted mt-1">{{ s.start.strftime('%H:%M') }} - {{ s.end.strftime('%H:%M') }}</div><div class="text-xs text-muted">{{ s.capacity }} chỗ</div></a>
+  {% endfor %}
+</div>
+{% if sel %}
+<div class="card p-4 mt-3"><div class="flex items-start gap-2"><div class="flex-1 min-w-0"><div class="font-head text-lg font-extrabold">{{ sel.label }}</div><div class="text-sm text-muted">{{ sel.title }}</div>
+    <div class="text-xs text-muted mt-1">Coach: {{ sel.coaches|map(attribute='first_name')|join(', ') or 'chưa gán' }}</div></div>
+  <button class="icon-btn" data-modal-open="m-shift-edit" aria-label="Sửa ca"><span class="material-symbols-outlined">edit</span></button>
+  <form method="post" action="{{ url_for('manager.shift_delete', sid=sel.id) }}">{{ ui.csrf() }}<button class="icon-btn text-red-600" data-confirm="Xoá {{ sel.name }}?" aria-label="Xoá ca"><span class="material-symbols-outlined">delete</span></button></form></div></div>
+<div class="m-sec"><h2>Điểm danh hôm nay</h2></div>
+{% for g in monitor %}
+<div class="card p-4 mb-3">
+  <div class="flex items-center gap-3">{{ ui.avatar(g.coach, 44) }}<div class="flex-1"><div class="font-semibold">Coach {{ g.coach.full_name }}</div><div class="text-xs text-muted">Có mặt: <b class="text-ink">{{ g.present }}/{{ g.rows|length }}</b></div></div>
+    <span class="pill {{ 'bg-emerald-100 text-emerald-700' if g.rows and g.present == g.rows|length else 'bg-amber-100 text-amber-700' }}">{{ 'Đầy đủ' if g.rows and g.present == g.rows|length else (g.rows|length - g.present) ~ ' chưa đến' }}</span></div>
+  <div class="m-bar mt-3"><i style="width:{{ (g.present / g.rows|length * 100)|round if g.rows else 0 }}%"></i></div>
+  <div class="mt-3 space-y-2">
+    {% for r in g.rows %}<div class="flex items-center gap-3 p-2.5 rounded-2xl border border-line {{ 'bg-red-50/70' if r.status.gym.state in ('expired','none') }}" data-card-url="{{ url_for('manager.member_card', uid=r.user.id) }}">
+      {{ ui.avatar(r.user, 38) }}<div class="min-w-0 flex-1"><div class="text-sm font-semibold truncate">{{ r.user.full_name }}</div><div class="mt-0.5">{{ ui.status_pill(r.status.gym.state, r.status.gym.days if r.status.gym.state in ('active','expiring') else none) }}</div></div>
+      {% if r.checkin %}<span class="pill bg-emerald-100 text-emerald-700"><span class="material-symbols-outlined text-[14px]">check</span>{{ r.checkin.at.strftime('%H:%M') }}</span>
+      {% elif r.booking and r.booking.status == 'absent' %}<span class="pill bg-slate-100 text-slate-600">Báo vắng</span>
+      {% elif r.booking %}<span class="pill bg-sky-100 text-sky-700">Đã đặt</span>{% else %}<span class="pill bg-slate-100 text-slate-500">Chưa đến</span>{% endif %}</div>
+    {% else %}<p class="text-sm text-muted">Coach chưa có học viên.</p>{% endfor %}
+  </div>
+</div>
+{% else %}<div class="card">{{ ui.empty('person_search', 'Ca này chưa có Coach. Bấm biểu tượng sửa để gán Coach.') }}</div>{% endfor %}
+{% else %}<div class="card mt-4">{{ ui.empty('event', 'Chưa có ca tập nào. Bấm “Thêm ca”.') }}</div>{% endif %}
+{% call ui.modal('m-shift-new', 'Thêm ca tập') %}<form method="post" action="{{ url_for('manager.shift_save') }}">{{ ui.csrf() }}{{ shift_form() }}<button class="btn btn-primary w-full mt-4">Lưu ca</button></form>{% endcall %}
+{% if sel %}{% call ui.modal('m-shift-edit', 'Sửa ' ~ sel.name) %}<form method="post" action="{{ url_for('manager.shift_save') }}">{{ ui.csrf() }}{{ shift_form(sel) }}<button class="btn btn-primary w-full mt-4">Lưu thay đổi</button></form>{% endcall %}{% endif %}
+{% endblock %}

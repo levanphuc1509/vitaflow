@@ -1,0 +1,31 @@
+{% extends "m/layout.html" %}
+{% block title %}Thưởng Rank{% endblock %}
+{% block content %}
+{% set sug = ranked|selectattr('suggest')|list %}
+<div class="m-hero"><div class="relative z-10 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-white/85"><span>Honor Board</span><span class="pill bg-white/20 text-white">{{ ranked|length }} học viên</span></div>
+  <div class="relative z-10 font-head text-2xl font-extrabold mt-1">Bảng vàng học viên của Coach {{ current_user.first_name }}</div>
+  <div class="relative z-10 text-sm text-white/90 mt-1">{{ sug|length }} học viên đáng được thưởng ✨ (Diamond/Gold hoặc streak ≥ 10 ngày)</div></div>
+<div class="m-sec"><h2>Xếp hạng &amp; đề xuất thưởng</h2></div>
+<div class="space-y-3">
+  {% for r in ranked %}{% set m = r.user %}
+  <div class="card p-4">
+    <div class="flex items-center gap-3"><span class="w-6 text-center font-head font-bold text-muted">{{ loop.index }}</span>{{ ui.avatar(m, 46) }}
+      <div class="min-w-0 flex-1"><div class="font-semibold truncate">{{ m.full_name }}</div><div class="text-xs text-muted">{{ r.score }} điểm · streak {{ m.streak or 0 }} ngày</div></div>{{ ui.rank_badge(r.name) }}</div>
+    <div class="mt-2 flex flex-wrap gap-1.5 items-center">{% if r.suggest %}<span class="pill bg-amber-100 text-amber-700">⭐ Đề xuất thưởng</span>{% endif %}{{ ui.status_pill(r.status.gym.state, r.status.gym.days if r.status.gym.state in ('active','expiring') else none) }}</div>
+    <button class="btn {{ 'btn-primary' if r.suggest else 'btn-ghost' }} w-full mt-3" data-modal-open="m-gift" onclick="document.getElementById('gift-member').value='{{ m.id }}';document.getElementById('gift-name').textContent='{{ m.full_name }}'"><span class="material-symbols-outlined text-[18px]">redeem</span>Tặng voucher</button>
+  </div>{% else %}<div class="card">{{ ui.empty('emoji_events', 'Chưa có học viên.') }}</div>{% endfor %}
+</div>
+<div class="m-sec"><h2>Quà đã gửi gần đây</h2></div>
+<div class="card p-2">{% for v in sent %}<div class="p-2.5 flex items-center gap-3 text-sm"><span class="w-9 h-9 rounded-xl bg-soft text-primary-dark grid place-items-center"><span class="material-symbols-outlined text-[20px]">redeem</span></span>
+  <div class="min-w-0 flex-1"><div class="font-semibold truncate">{{ v.title }} (-{{ v.percent }}%)</div><div class="text-xs text-muted">{{ v.owner.full_name }} · {{ v.created_at|time_ago }}</div></div>
+  <span class="pill {{ 'bg-slate-100 text-slate-500' if v.used_at else 'bg-emerald-100 text-emerald-700' }}">{{ 'Đã dùng' if v.used_at else 'Chưa dùng' }}</span></div>
+{% else %}<p class="p-3 text-sm text-muted">Bạn chưa gửi quà nào.</p>{% endfor %}</div>
+{% call ui.modal('m-gift', 'Tặng voucher cho học viên') %}
+  <form method="post" action="{{ url_for('coach.gift') }}" class="space-y-3">{{ ui.csrf() }}<input type="hidden" name="member_id" id="gift-member">
+    <p class="text-sm">Gửi tới: <b id="gift-name"></b></p>
+    <div><label class="lbl">Tên quà</label><input name="title" class="input" value="Thưởng chuyên cần"></div>
+    <div class="grid grid-cols-2 gap-3"><div><label class="lbl">Giảm giá (1-20%)</label><input name="percent" type="number" inputmode="numeric" min="1" max="20" value="10" class="input"></div><div><label class="lbl">Hiệu lực (ngày)</label><input name="days" type="number" inputmode="numeric" min="1" max="365" value="30" class="input"></div></div>
+    <div><label class="lbl">Lời nhắn khích lệ</label><input name="message" class="input" value="Coach tự hào về em! Gia hạn sớm để giữ streak nhé 💪"></div>
+    <button class="btn btn-primary w-full">Gửi quà</button></form>
+{% endcall %}
+{% endblock %}

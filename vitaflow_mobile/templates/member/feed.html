@@ -1,0 +1,67 @@
+{% extends "layout.html" %}
+{% block title %}Bảng tin{% endblock %}
+{% block page_title %}Bảng tin cộng đồng{% endblock %}
+{% block content %}
+<div class="grid xl:grid-cols-[1fr_340px] gap-6 max-w-6xl mx-auto">
+  <div class="space-y-5 min-w-0">
+    <form method="post" action="{{ url_for('member.post_create') }}" enctype="multipart/form-data" class="card p-4">
+      {{ ui.csrf() }}
+      <div class="flex gap-3">{{ ui.avatar(current_user, 44) }}<textarea name="body" rows="2" maxlength="1500" class="input !border-0 !shadow-none resize-none" placeholder="Hôm nay bạn tập thế nào, {{ current_user.first_name }}? Chia sẻ check-in hoặc mâm cơm nhé…"></textarea></div>
+      <div class="mt-3 flex flex-wrap items-center gap-2 pt-3 border-t border-line">
+        <select name="kind" class="input !w-auto !py-1.5 text-sm"><option value="checkin">📍 Check-in phòng tập</option><option value="meal">🥗 Khoe mâm cơm AI</option><option value="general">💬 Chia sẻ</option></select>
+        <label class="btn btn-ghost btn-sm cursor-pointer"><span class="material-symbols-outlined text-[18px]">add_photo_alternate</span><span id="post-file-name">Thêm ảnh</span><input type="file" name="image" accept="image/*" class="hidden" onchange="document.getElementById('post-file-name').textContent=this.files[0]?this.files[0].name.slice(0,18):'Thêm ảnh'"></label>
+        <button class="btn btn-primary btn-sm ml-auto">Đăng bài</button></div>
+    </form>
+
+    {% for p in posts %}
+    <article id="post-{{ p.id }}" class="card p-5">
+      <div class="flex items-center gap-3">{{ ui.avatar(p.user, 44) }}
+        <div class="min-w-0 flex-1"><div class="flex items-center gap-2 flex-wrap"><span class="font-semibold">{{ p.user.full_name }}</span>{{ ui.rank_badge(ranks[p.user_id]) }}
+          {% if p.kind == 'checkin' %}<span class="pill bg-emerald-100 text-emerald-700">Check-in</span>{% elif p.kind == 'meal' %}<span class="pill bg-lime-100 text-lime-700">Mâm cơm</span>{% elif p.kind == 'invite' %}<span class="pill bg-violet-100 text-violet-700">Rủ bạn tập</span>{% endif %}</div>
+          <div class="text-xs text-muted">{{ p.created_at|time_ago }}</div></div>
+        {% if p.user_id == current_user.id %}<form method="post" action="{{ url_for('member.post_delete', pid=p.id) }}">{{ ui.csrf() }}<button class="icon-btn" data-confirm="Xoá bài viết này?" aria-label="Xoá"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>{% else %}<button class="icon-btn" data-report-post="{{ p.id }}" title="Báo cáo bài viết" aria-label="Báo cáo"><span class="material-symbols-outlined text-[20px]">flag</span></button><button class="icon-btn" data-block-user="{{ p.user_id }}" data-name="{{ p.user.first_name }}" title="Chặn người dùng" aria-label="Chặn"><span class="material-symbols-outlined text-[20px]">block</span></button>{% endif %}
+      </div>
+      {% if p.body %}<p class="mt-3 whitespace-pre-line text-[15px]">{{ p.body }}</p>{% endif %}
+      {% if p.image_url %}<img src="{{ p.image_url }}" alt="" class="mt-3 rounded-2xl w-full max-h-[480px] object-cover">{% endif %}
+      {% if p.kind == 'invite' and p.user_id != current_user.id %}<a href="{{ url_for('member.schedule') }}" class="btn btn-ghost btn-sm mt-3"><span class="material-symbols-outlined text-[18px]">event_available</span>Tham gia cùng bạn ấy</a>{% endif %}
+      <div class="mt-3 pt-3 border-t border-line flex items-center gap-4 text-sm">
+        <button class="flex items-center gap-1.5 font-semibold like-btn {{ 'text-rose-600' if p.id in liked else 'text-muted' }}" data-like="{{ p.id }}"><span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' {{ 1 if p.id in liked else 0 }}">favorite</span><span class="like-count">{{ p.likes|length }}</span></button>
+        <span class="flex items-center gap-1.5 text-muted"><span class="material-symbols-outlined text-[22px]">chat_bubble</span>{{ p.comments|length }}</span>
+      </div>
+      {% for c in p.comments if c.user_id not in blocked %}<div class="mt-3 flex gap-2">{{ ui.avatar(c.user, 30) }}<div class="bg-soft/60 rounded-2xl px-3 py-1.5 text-sm"><b>{{ c.user.first_name }}</b> {{ c.body }}</div>{% if c.user_id != current_user.id %}<button class="icon-btn !w-7 !h-7 self-center text-muted" data-report-comment="{{ c.id }}" title="Báo cáo bình luận" aria-label="Báo cáo bình luận"><span class="material-symbols-outlined text-[16px]">flag</span></button>{% endif %}</div>{% endfor %}
+      <form method="post" action="{{ url_for('member.post_comment', pid=p.id) }}" class="mt-3 flex gap-2">{{ ui.csrf() }}<input name="body" maxlength="500" class="input !py-1.5" placeholder="Viết bình luận…" required><button class="btn btn-ghost btn-sm" aria-label="Gửi"><span class="material-symbols-outlined text-[18px]">send</span></button></form>
+    </article>
+    {% else %}<div class="card">{{ ui.empty('dynamic_feed', 'Chưa có bài viết nào. Hãy là người đầu tiên chia sẻ!') }}</div>{% endfor %}
+  </div>
+
+  <aside class="space-y-4">
+    <div class="card p-5 bg-gradient-to-br from-primary/15 to-accent/20 border-0">
+      <div class="flex items-center justify-between"><div><div class="text-xs text-muted">Chuỗi chuyên cần</div>
+        <div class="font-head text-4xl font-extrabold flex items-center gap-1"><span class="material-symbols-outlined text-orange-500 text-4xl" style="font-variation-settings:'FILL' 1">local_fire_department</span><span id="streak-n">{{ current_user.streak or 0 }}</span><span class="text-base font-semibold text-muted">ngày</span></div></div>{{ ui.rank_badge(my_rank.name) }}</div>
+      <div class="mt-3 text-xs text-muted">{{ my_rank.score }} điểm · {{ my_rank.sessions }} buổi trong 30 ngày</div>
+      <div class="mt-3 flex items-center justify-between rounded-xl bg-white/80 p-3"><div><div class="text-sm font-semibold">Kỳ nghỉ sinh lý</div><div class="text-[11px] text-muted">Bảo vệ streak khi nghỉ tập</div></div>
+        <button id="period" role="switch" aria-checked="{{ 'true' if current_user.period_mode else 'false' }}" class="w-12 h-7 rounded-full transition relative {{ 'bg-primary-dark' if current_user.period_mode else 'bg-slate-300' }}"><span class="absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-all {{ 'left-[22px]' if current_user.period_mode else 'left-0.5' }}"></span></button></div>
+    </div>
+
+    <div class="card p-5">
+      <div class="flex items-center justify-between"><h3 class="font-head font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sky-500">water_drop</span>Nước uống hôm nay</h3><span class="text-sm font-semibold"><span id="water-ml">{{ water }}</span>/{{ goal }}ml</span></div>
+      <div class="mt-3 h-3 rounded-full bg-sky-100 overflow-hidden"><div id="water-bar" class="h-full bg-sky-400 rounded-full transition-all" style="width:{{ [100, (water / goal * 100)|round]|min }}%"></div></div>
+      <div class="mt-3 grid grid-cols-3 gap-2"><button class="btn btn-outline btn-sm" data-water="-250">−250</button><button class="btn btn-ghost btn-sm" data-water="250">+250ml</button><button class="btn btn-ghost btn-sm" data-water="500">+500ml</button></div>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-head font-bold flex items-center gap-2"><span class="material-symbols-outlined text-primary">group_add</span>Rủ bạn tập cùng</h3>
+      <p class="text-sm text-muted mt-1">Đăng lời mời để chị em cùng tham gia ca tập.</p>
+      <button class="btn btn-primary w-full mt-3" data-modal-open="m-invite">Tạo lời mời</button>
+      {% if cur %}<div class="mt-3 text-xs rounded-xl bg-soft/60 p-3"><span class="live-dot"></span> Đang diễn ra: <b>{{ cur.name }}</b> {{ cur.start.strftime('%H:%M') }}-{{ cur.end.strftime('%H:%M') }}</div>{% endif %}
+    </div>
+  </aside>
+</div>
+{% call ui.modal('m-invite', 'Rủ bạn tập cùng') %}
+  <form method="post" action="{{ url_for('member.invite') }}" class="space-y-3">{{ ui.csrf() }}
+    <div><label class="lbl">Chọn ca</label><select name="shift_id" class="input">{% for s in shifts %}<option value="{{ s.id }}">{{ s.name }} · {{ s.start.strftime('%H:%M') }}-{{ s.end.strftime('%H:%M') }} · {{ s.title }}</option>{% endfor %}</select></div>
+    <div><label class="lbl">Lời nhắn</label><input name="message" class="input" maxlength="200" value="Ai tập cùng mình không nè? 💪"></div>
+    <button class="btn btn-primary w-full">Đăng lời mời</button></form>
+{% endcall %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/feed.js') }}"></script>{% endblock %}

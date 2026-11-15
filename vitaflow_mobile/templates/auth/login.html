@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập{% endblock %}
+{% block body %}
+<div class="min-h-screen grid lg:grid-cols-2">
+  <div class="hidden lg:flex flex-col justify-between p-12 text-white bg-[#006039] relative overflow-hidden">
+    <div class="absolute -right-24 -top-24 w-96 h-96 rounded-full bg-[#C5A059]/25 blur-3xl"></div>
+    <div class="absolute -left-16 bottom-0 w-80 h-80 rounded-full bg-white/10 blur-3xl"></div>
+    <a href="{{ url_for('public.landing') }}" class="relative flex items-center gap-3"><span class="w-10 h-10 rounded-xl bg-white text-[#006039] grid place-items-center font-head font-extrabold">{{ COMPANY_NAME[:1]|upper }}</span><span class="font-head font-extrabold text-xl tracking-tight">{{ COMPANY_NAME }}</span></a>
+    <div class="relative"><h2 class="font-head text-4xl font-extrabold leading-tight">Hành trình độ body<br>không đổi &amp; không mệt mỏi.</h2>
+      <p class="mt-4 text-white/80 max-w-md">Nền tảng quản lý phòng tập, dinh dưỡng AI và cộng đồng dành riêng cho phái đẹp.</p>
+      <div class="mt-8 flex gap-3 text-sm"><span class="pill bg-white/15 text-white px-3 py-1">Quản lý</span><span class="pill bg-[#FF5A36] text-white px-3 py-1">Coach</span><span class="pill bg-[#F472B6] text-white px-3 py-1">Thành viên</span></div></div>
+    <div class="relative text-xs text-white/60">© {{ COMPANY_NAME }}</div>
+  </div>
+  <div class="flex items-center justify-center p-6 bg-canvas">
+    <div class="w-full max-w-md">
+      <h1 class="font-head text-3xl font-extrabold">Chào mừng trở lại 👋</h1>
+      <p class="text-muted mt-1">Đăng nhập để tiếp tục. Hệ thống tự đưa bạn tới đúng khu vực theo vai trò.</p>
+      <form method="post" class="mt-8 space-y-4 card p-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div><label class="lbl">Email</label><input id="f-email" name="email" type="email" class="input" required autofocus></div>
+        <div><label class="lbl">Mật khẩu</label><input id="f-pass" name="password" type="password" class="input" required></div>
+        <label class="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="remember"> Ghi nhớ đăng nhập</label>
+        <button class="btn btn-primary w-full py-3">Đăng nhập</button>
+        <p class="text-sm text-center text-muted">Chưa có tài khoản? <a href="{{ url_for('auth.register') }}" class="font-semibold text-primary-dark">Đăng ký thành viên</a></p>
+      </form>
+      <div class="mt-6 text-center text-xs text-muted"><a class="underline" href="{{ url_for('public.privacy') }}">Quyền riêng tư</a> · <a class="underline" href="{{ url_for('public.terms') }}">Điều khoản</a> · <a class="underline" href="{{ url_for('public.support') }}">Hỗ trợ</a></div>
+      {% if demo %}<div class="mt-6" data-demo><div class="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Tài khoản demo (bấm để điền)</div>
+        <div class="grid grid-cols-3 gap-2">
+          {% for label, email, pw in demo %}
+            <button type="button" class="card p-3 text-left hover:shadow-md transition" onclick="document.getElementById('f-email').value='{{ email }}';document.getElementById('f-pass').value='{{ pw }}'">
+              <div class="font-semibold text-sm">{{ label }}</div><div class="text-[11px] text-muted truncate">{{ email }}</div></button>
+          {% endfor %}</div></div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

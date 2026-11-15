@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Mã QR của tôi{% endblock %}
+{% block page_title %}Mã QR điểm danh cá nhân{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="card p-6 text-center">
+    <div class="flex items-center gap-3 text-left">{{ ui.avatar(current_user, 52) }}<div><div class="font-head font-bold">{{ current_user.full_name }}</div><div class="text-sm text-muted">{{ current_user.member_code }}</div></div>
+      <div class="ml-auto">{{ ui.status_pill(status.gym.state, status.gym.days if status.gym.state in ('active','expiring') else none) }}</div></div>
+    <div class="mt-5 mx-auto w-64 max-w-full p-4 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/25"><div class="qr-box bg-white rounded-2xl p-3">{{ svg|safe }}</div></div>
+    <p class="mt-4 text-sm text-muted">Đưa mã này cho Coach quét tại quầy lễ tân, hoặc dùng camera điện thoại quét mã QR của ca tập đang hiển thị ở phòng tập.</p>
+    {% if today_ck %}<div class="mt-4 rounded-xl bg-emerald-50 text-emerald-700 text-sm p-3 flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[20px]">check_circle</span>Đã điểm danh lúc {{ today_ck.at.strftime('%H:%M') }} hôm nay</div>{% endif %}
+    {% if status.gym.state in ('expired','none') %}<div class="mt-4 rounded-xl bg-red-50 text-red-700 text-sm p-3">Gói tập đã hết hạn — mã QR sẽ không điểm danh được. <a class="font-semibold underline" href="{{ url_for('member.shop') }}">Nạp gói</a></div>{% endif %}
+    <div class="mt-4 text-xs text-muted">Mã hội viên nhập tay: <b class="font-mono text-ink">{{ current_user.member_code }}</b></div>
+  </div>
+</div>
+{% endblock %}

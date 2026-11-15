@@ -1,0 +1,48 @@
+{% extends "m/layout.html" %}
+{% set back_url = url_for('member.profile') %}
+{% block title %}Nạp gói{% endblock %}
+{% block content %}
+<form method="post" action="{{ url_for('member.checkout') }}" id="shop" class="space-y-4 pb-28">
+  {{ ui.csrf() }}
+  <div class="m-hero"><div class="relative z-10 text-xs font-semibold uppercase tracking-wider text-white/85">Cửa hàng {{ COMPANY_NAME }}</div>
+    <div class="relative z-10 font-head text-2xl font-extrabold">Nạp gói nhanh bằng VietQR</div>
+    <div class="relative z-10 text-sm text-white/90 mt-1">Ngày tập mới được <b>cộng dồn</b>{% if status.gym.expires %} vào hạn hiện tại ({{ status.gym.expires.strftime('%d/%m/%Y') }}){% endif %}</div></div>
+
+  <section><h2 class="font-head font-bold text-lg flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-primary-dark text-white grid place-items-center text-sm">1</span>Chọn gói dịch vụ</h2>
+    <div class="chips mt-3">{% for k, l in (('all','Tất cả'),('gym','Gym'),('coach','Coach 1:1'),('combo','Combo')) %}<button type="button" data-kind="{{ k }}" class="chip kind-tab {{ 'on' if k == 'all' }}">{{ l }}</button>{% endfor %}</div>
+    <div class="mt-3 space-y-2.5">
+      {% for p in plans %}
+      <label class="plan-card block relative cursor-pointer rounded-2xl bg-white border-2 border-line p-4 has-[:checked]:border-primary-dark has-[:checked]:bg-soft/70" data-kind="{{ p.kind }}">
+        <input type="radio" name="plan_id" value="{{ p.id }}" class="absolute top-4 right-4 w-5 h-5 accent-pink-600" required {{ 'checked' if pre_plan == p.id }}>
+        <span class="pill bg-soft text-primary-dark">{{ {'gym':'Gym','coach':'Coach 1:1','combo':'Combo'}[p.kind] }}</span>
+        <div class="mt-1.5 font-head font-bold leading-tight pr-8">{{ p.name }}</div>
+        <div class="flex items-baseline justify-between mt-1"><span class="font-head text-xl font-extrabold">{{ p.price|vnd }}<span class="text-xs text-muted font-medium">đ</span></span><span class="text-xs text-muted">{{ p.days }} ngày</span></div>
+        <div class="text-xs text-muted mt-0.5">{{ p.perks }}</div></label>{% endfor %}
+    </div></section>
+
+  <section class="card p-4"><h2 class="font-head font-bold text-lg flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-primary-dark text-white grid place-items-center text-sm">2</span>Cơ sở, ca tập &amp; Coach</h2>
+    <div class="mt-3 space-y-3">
+      <div><label class="lbl">Cơ sở</label><select name="branch_id" id="sel-branch" class="input" required>{% for b in branches %}<option value="{{ b.id }}" {{ 'selected' if b.id == current_user.branch_id }}>{{ b.name }}</option>{% endfor %}</select></div>
+      <div><label class="lbl">Ca tập ưu tiên</label><select name="shift_id" id="sel-shift" class="input"></select></div>
+      <div><label class="lbl" id="coach-lbl">Coach phụ trách</label><select name="coach_id" id="sel-coach" class="input"></select><p id="coach-hint" class="text-xs text-muted mt-1 hidden">Gói có Coach cần chọn Coach phụ trách.</p></div>
+    </div></section>
+
+  <section class="card p-4"><h2 class="font-head font-bold text-lg flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-primary-dark text-white grid place-items-center text-sm">3</span>Voucher giảm giá</h2>
+    <div class="mt-3 space-y-2">
+      <label class="flex items-center gap-3 p-3 rounded-xl border border-line has-[:checked]:bg-soft/70"><input type="radio" name="voucher_id" value="" checked class="w-5 h-5 accent-pink-600"><span class="text-sm">Không dùng voucher</span></label>
+      {% for v in data.vouchers %}<label class="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/60 has-[:checked]:bg-soft/70"><input type="radio" name="voucher_id" value="{{ v.id }}" data-percent="{{ v.percent }}" class="w-5 h-5 accent-pink-600"><span class="text-sm flex-1">{{ v.title }}</span><b class="text-primary-dark">-{{ v.percent }}%</b></label>{% endfor %}
+      {% if not data.vouchers %}<p class="text-xs text-muted">Bạn chưa có voucher khả dụng. Tập chăm chỉ để nhận quà thưởng theo hạng!</p>{% endif %}
+    </div></section>
+
+  <section class="card p-4 text-sm space-y-2"><h2 class="font-head font-bold text-lg">Tóm tắt đơn hàng</h2>
+    <div class="flex justify-between"><span class="text-muted">Gói</span><b id="sum-plan">—</b></div>
+    <div class="flex justify-between"><span class="text-muted">Giá gốc</span><span id="sum-price">0đ</span></div>
+    <div class="flex justify-between"><span class="text-muted">Voucher</span><span id="sum-disc" class="text-emerald-600">0đ</span></div></section>
+
+  <div class="fixed inset-x-0 bottom-0 z-40 bg-white border-t border-line p-3 flex items-center gap-3" style="padding-bottom:calc(.75rem + env(safe-area-inset-bottom))">
+    <div class="flex-1"><div class="text-xs text-muted">Thanh toán</div><div id="sum-total" class="font-head text-xl font-extrabold text-primary-dark">0đ</div></div>
+    <button class="btn btn-primary !px-5 !py-3"><span class="material-symbols-outlined text-[20px]">qr_code_2</span>Tạo mã chuyển khoản</button></div>
+</form>
+{% endblock %}
+{% block scripts %}<script type="application/json" id="shop-data">{{ data|tojson }}</script>
+<script src="{{ url_for('static', filename='js/shop.js') }}"></script>{% endblock %}

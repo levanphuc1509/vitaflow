@@ -1,0 +1,51 @@
+{% extends "m/layout.html" %}
+{% block title %}Nhân sự & Cơ sở{% endblock %}
+{% macro coach_fields(c=None) %}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="col-span-2"><label class="lbl">Họ và tên</label><input name="full_name" class="input" required value="{{ c.full_name if c }}"></div>
+    <div class="col-span-2"><label class="lbl">Email đăng nhập</label><input name="email" type="email" class="input" required value="{{ c.email if c }}"></div>
+    <div><label class="lbl">Số điện thoại</label><input name="phone" type="tel" class="input" value="{{ c.phone or '' if c }}"></div>
+    <div><label class="lbl">Cơ sở</label><select name="branch_id" class="input">{% for b in branches %}<option value="{{ b.id }}" {{ 'selected' if c and c.branch_id == b.id }}>{{ b.name }}</option>{% endfor %}</select></div>
+    <div><label class="lbl">Chức danh</label><input name="title" class="input" value="{{ c.title or '' if c }}"></div>
+    <div><label class="lbl">Chuyên môn</label><input name="specialty" class="input" value="{{ c.specialty or '' if c }}"></div>
+    <div class="col-span-2"><label class="lbl">{{ 'Đặt lại mật khẩu (bỏ trống nếu giữ nguyên)' if c else 'Mật khẩu (tối thiểu 6 ký tự)' }}</label><input name="password" type="password" class="input" minlength="6" {{ '' if c else 'required' }}></div>
+  </div>
+{% endmacro %}
+{% block content %}
+<div class="grid grid-cols-2 gap-3">
+  <div class="card p-4"><div class="text-xs text-muted">Huấn luyện viên</div><div class="font-head text-3xl font-extrabold">{{ coaches|length }}</div></div>
+  <div class="card p-4"><div class="text-xs text-muted">Đang hoạt động</div><div class="font-head text-3xl font-extrabold">{{ coaches|selectattr('active')|list|length }}</div></div>
+</div>
+<form method="get" class="mt-3 flex gap-2"><div class="relative flex-1"><span class="material-symbols-outlined absolute left-3.5 top-2.5 text-muted text-[20px]">search</span><input name="q" value="{{ q }}" class="input pl-11 !rounded-full" placeholder="Tìm Coach theo tên, email…"></div>
+  <button type="button" class="btn btn-primary !rounded-full !px-4" data-modal-open="m-add" aria-label="Thêm Coach"><span class="material-symbols-outlined text-[22px]">person_add</span></button></form>
+
+<div class="mt-4 space-y-3">
+{% for c in coaches %}
+  <div class="card p-4 {{ '' if c.active else 'opacity-60' }}">
+    <div class="flex items-start gap-3">{{ ui.avatar(c, 52) }}
+      <div class="min-w-0 flex-1"><div class="flex items-center gap-2"><span class="font-head font-bold truncate">{{ c.full_name }}</span></div><div class="text-sm text-muted truncate">{{ c.title }}</div>
+        <div class="mt-1 flex flex-wrap gap-1.5"><span class="pill bg-soft text-primary-dark">{{ c.specialty or 'Chưa có chuyên môn' }}</span><span class="pill bg-slate-100 text-slate-600">{{ c.branch.name if c.branch else 'Chưa gán cơ sở' }}</span></div></div>
+      <span class="pill {{ 'bg-emerald-100 text-emerald-700' if c.active else 'bg-slate-200 text-slate-600' }}">{{ 'Hoạt động' if c.active else 'Đã tắt' }}</span></div>
+    <div class="mt-3 flex items-center gap-2"><div class="flex -space-x-2">{% for s in c.students[:5] %}<span class="ring-2 ring-white rounded-full">{{ ui.avatar(s, 28) }}</span>{% endfor %}</div><span class="text-sm text-muted">{{ c.students|length }} học viên</span></div>
+    <div class="mt-3 grid grid-cols-4 gap-2">
+      <button class="btn btn-ghost btn-sm" data-modal-open="m-assign-{{ c.id }}"><span class="material-symbols-outlined text-[18px]">group_add</span></button>
+      <button class="btn btn-outline btn-sm" data-modal-open="m-edit-{{ c.id }}"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+      <form method="post" action="{{ url_for('manager.staff_toggle', uid=c.id) }}">{{ ui.csrf() }}<button class="btn btn-outline btn-sm w-full"><span class="material-symbols-outlined text-[18px]">{{ 'toggle_on' if c.active else 'toggle_off' }}</span></button></form>
+      <form method="post" action="{{ url_for('manager.staff_delete', uid=c.id) }}">{{ ui.csrf() }}<button class="btn btn-danger btn-sm w-full" data-confirm="Xoá Coach {{ c.full_name }}? Học viên của Coach sẽ được bỏ gán."><span class="material-symbols-outlined text-[18px]">delete</span></button></form>
+    </div>
+  </div>
+  {% call ui.modal('m-edit-' ~ c.id, 'Sửa Coach') %}<form method="post" action="{{ url_for('manager.staff_edit', uid=c.id) }}">{{ ui.csrf() }}{{ coach_fields(c) }}<button class="btn btn-primary w-full mt-4">Lưu thay đổi</button></form>{% endcall %}
+  {% call ui.modal('m-assign-' ~ c.id, 'Học viên của ' ~ c.first_name) %}
+    <div class="rounded-2xl bg-soft/60 p-3 text-sm mb-3 flex justify-between"><span>Tải hiện tại</span><b>{{ c.students|length }} học viên</b></div>
+    <form method="post" action="{{ url_for('manager.staff_assign', uid=c.id) }}">{{ ui.csrf() }}
+      <input class="input mb-3" placeholder="Tìm học viên…" data-filter="#al-{{ c.id }} label">
+      <div id="al-{{ c.id }}" class="space-y-2 max-h-[48vh] overflow-y-auto">
+        {% for m in all_members %}<label class="flex items-center gap-3 p-2.5 rounded-xl border border-line cursor-pointer">
+          <input type="checkbox" name="member_ids" value="{{ m.id }}" class="w-5 h-5" {{ 'checked' if m.coach_id == c.id }}>{{ ui.avatar(m, 36) }}
+          <span class="min-w-0"><span class="block text-sm font-semibold truncate">{{ m.full_name }}</span><span class="block text-[11px] text-muted truncate">{{ m.member_code }}{% if m.coach and m.coach_id != c.id %} · đang với {{ m.coach.first_name }}{% elif not m.coach %} · chưa có Coach{% endif %}</span></span></label>{% endfor %}
+      </div><button class="btn btn-primary w-full mt-4">Lưu danh sách học viên</button></form>
+  {% endcall %}
+{% else %}<div class="card">{{ ui.empty('badge', 'Không tìm thấy Coach nào.') }}</div>{% endfor %}
+</div>
+{% call ui.modal('m-add', 'Thêm Coach mới') %}<form method="post" action="{{ url_for('manager.staff_add') }}">{{ ui.csrf() }}{{ coach_fields() }}<button class="btn btn-primary w-full mt-4">Tạo tài khoản Coach</button></form>{% endcall %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block title %}AI Diet & Messenger{% endblock %}
+{% block page_title %}AI Diet &amp; Messenger 1:1{% endblock %}
+{% block content %}
+{% set open_esc = escalations|selectattr('status', 'equalto', 'open')|list %}
+{% if open_esc %}
+<div class="card border-l-4 !border-l-rose-500 p-4 mb-5">
+  <div class="flex items-center gap-2 font-head font-bold"><span class="material-symbols-outlined text-rose-600">flag</span>Vấn đề Coach chuyển tiếp ({{ open_esc|length }})</div>
+  <div class="mt-3 grid md:grid-cols-2 gap-3">
+    {% for e in open_esc %}<div class="rounded-xl bg-rose-50 p-3 text-sm">
+      <div class="flex items-center gap-2"><b>{{ e.member.full_name }}</b><span class="text-xs text-muted">từ Coach {{ e.coach.first_name }} · {{ e.created_at|time_ago }}</span></div>
+      <p class="mt-1">{{ e.reason }}</p>
+      <div class="mt-2 flex gap-2"><a class="btn btn-ghost btn-sm" href="{{ url_for('manager.nutrition', peer=e.member_id) }}">Mở chat &amp; hồ sơ</a>
+        <form method="post" action="{{ url_for('manager.escalation_resolve', eid=e.id) }}">{{ ui.csrf() }}<button class="btn btn-primary btn-sm">Đã xử lý</button></form></div></div>{% endfor %}
+  </div>
+</div>
+{% endif %}
+<div class="grid xl:grid-cols-[1fr_340px] gap-5">
+  <div>{% include "partials/chat.html" %}</div>
+  <div class="card p-5 h-fit">
+    {% if side %}{% set scoring = false %}{% include "partials/diet_side.html" %}
+    {% elif peer and peer.role == 'coach' %}
+      <div class="flex items-center gap-3">{{ ui.avatar(peer, 44) }}<div><div class="font-semibold">Coach {{ peer.full_name }}</div><div class="text-xs text-muted">{{ peer.specialty }}</div></div></div>
+      <p class="mt-4 text-sm text-muted">{{ peer.students|length }} học viên đang phụ trách.</p>
+    {% else %}<p class="text-sm text-muted text-center py-6">Chọn một hội viên để xem thực đơn AI, bài tập và nhật ký bữa ăn của họ.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

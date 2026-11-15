@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block title %}Phân hạng & Gia hạn{% endblock %}
+{% block page_title %}Phân hạng, Gia hạn &amp; Quà tặng{% endblock %}
+{% block topbar_extra %}{{ ui.branch_filter(sel_branch) }}{% endblock %}
+{% block content %}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  {% for r in ('Diamond','Gold','Silver','Bronze') %}<div class="card p-4 flex items-center justify-between">{{ ui.rank_badge(r) }}<span class="font-head text-2xl font-extrabold">{{ counts[r] }}</span></div>{% endfor %}
+</div>
+
+<div class="mt-6 flex flex-wrap gap-1 overflow-x-auto">
+  {% for key, label, icon in (('orders','Đơn nạp gói','payments'),('expiring','Sắp hết hạn','hourglass_top'),('freeze','Bảo lưu thẻ','pause_circle'),('gift','Gửi quà tặng','redeem')) %}
+    <a href="{{ url_for('manager.rewards', tab=key) }}" class="tab flex items-center gap-1.5 {{ 'tab-active' if tab == key }}"><span class="material-symbols-outlined text-[18px]">{{ icon }}</span>{{ label }}</a>{% endfor %}
+</div>
+
+<div class="mt-4">
+{% if tab == 'orders' %}
+  <div class="card divide-y divide-line">
+    {% for o in orders %}
+    <div class="p-4 flex flex-wrap items-center gap-4">
+      {{ ui.avatar(o.user, 44) }}
+      <div class="min-w-0 flex-1"><div class="font-semibold">{{ o.user.full_name }} <span class="text-xs text-muted font-normal">{{ o.user.member_code }}</span></div>
+        <div class="text-sm text-muted">{{ o.plan.name }} · {{ o.branch.name if o.branch }}{% if o.coach %} · Coach {{ o.coach.first_name }}{% endif %}{% if o.shift %} · {{ o.shift.name }}{% endif %}</div>
+        <div class="text-xs mt-1">Nội dung CK: <b class="font-mono bg-soft px-1.5 py-0.5 rounded">{{ o.transfer_code }}</b>{% if o.voucher %} · Voucher -{{ o.voucher.percent }}%{% endif %}</div></div>
+      <div class="text-right"><div class="font-head font-bold">{{ o.amount|vnd }}đ</div><div class="text-xs text-muted">{{ o.created_at|time_ago }}</div></div>
+      {% if o.status in ('claimed','pending') %}
+        <div class="flex gap-2">
+          <form method="post" action="{{ url_for('manager.order_action', oid=o.id, action='confirm') }}">{{ ui.csrf() }}<button class="btn btn-primary btn-sm" data-confirm="Xác nhận đã nhận {{ o.amount|vnd }}đ?"><span class="material-symbols-outlined text-[16px]">check</span>Xác nhận</button></form>
+          <form method="post" action="{{ url_for('manager.order_action', oid=o.id, action='reject') }}">{{ ui.csrf() }}<button class="btn btn-danger btn-sm">Từ chối</button></form></div>
+        {% if o.status == 'pending' %}<span class="pill bg-slate-100 text-slate-600">Chờ khách CK</span>{% else %}<span class="pill bg-amber-100 text-amber-700">Khách báo đã CK</span>{% endif %}
+      {% else %}<span class="pill {{ 'bg-emerald-100 text-emerald-700' if o.status == 'confirmed' else 'bg-red-100 text-red-700' }}">{{ 'Đã xác nhận' if o.status == 'confirmed' else 'Đã từ chối' }}</span>{% endif %}
+    </div>
+    {% else %}{{ ui.empty('payments', 'Chưa có đơn nạp gói nào.') }}{% endfor %}
+  </div>
+
+{% elif tab == 'expiring' %}
+  <div class="card divide-y divide-line">
+    {% for m, st in expiring %}
+    <div class="p-4 flex flex-wrap items-center gap-4">{{ ui.avatar(m, 44) }}
+      <div class="min-w-0 flex-1"><div class="font-semibold">{{ m.full_name }} <span class="text-xs text-muted font-normal">{{ m.member_code }}</span></div>
+        <div class="text-sm text-muted">Coach: {{ m.coach.full_name if m.coach else 'chưa có' }}</div></div>
+      <div class="flex flex-wrap gap-1.5 items-center"><span class="text-xs text-muted">Gym</span>{{ ui.status_pill(st.gym.state, st.gym.days if st.gym.state == 'expiring' else none) }}
+        {% if m.coach_expires %}<span class="text-xs text-muted">Coach</span>{{ ui.status_pill(st.coach.state, st.coach.days if st.coach.state == 'expiring' else none) }}{% endif %}</div>
+      <button class="btn btn-ghost btn-sm" data-modal-open="m-gift" onclick="document.getElementById('gift-member').value='{{ m.id }}'"><span class="material-symbols-outlined text-[16px]">redeem</span>Gửi voucher gia hạn</button>
+    </div>{% else %}{{ ui.empty('verified', 'Tất cả hội viên đều còn hạn dài.') }}{% endfor %}
+  </div>
+
+{% elif tab == 'freeze' %}
+  <div class="card divide-y divide-line">
+    {% for r in freezes %}<div class="p-4 flex flex-wrap items-center gap-4">{{ ui.avatar(r.user, 44) }}
+      <div class="flex-1 min-w-0"><div class="font-semibold">{{ r.user.full_name }} · bảo lưu {{ r.days }} ngày</div><div class="text-sm text-muted">{{ r.reason or 'Không ghi lý do' }} · {{ r.created_at|time_ago }}</div></div>
+      {% if r.status == 'pending' %}<div class="flex gap-2">
+        <form method="post" action="{{ url_for('manager.freeze_action', fid=r.id, action='approve') }}">{{ ui.csrf() }}<button class="btn btn-primary btn-sm">Duyệt</button></form>
+        <form method="post" action="{{ url_for('manager.freeze_action', fid=r.id, action='reject') }}">{{ ui.csrf() }}<button class="btn btn-danger btn-sm">Từ chối</button></form></div>
+      {% else %}<span class="pill {{ 'bg-emerald-100 text-emerald-700' if r.status == 'approved' else 'bg-red-100 text-red-700' }}">{{ 'Đã duyệt' if r.status == 'approved' else 'Từ chối' }}</span>{% endif %}
+    </div>{% else %}{{ ui.empty('pause_circle', 'Chưa có yêu cầu bảo lưu.') }}{% endfor %}
+  </div>
+
+{% else %}
+  <div class="grid lg:grid-cols-[360px_1fr] gap-5">
+    <form method="post" action="{{ url_for('manager.gift') }}" class="card p-5 space-y-3 h-fit">{{ ui.csrf() }}
+      <h3 class="font-head font-bold text-lg flex items-center gap-2"><span class="material-symbols-outlined text-primary">redeem</span>Gửi voucher / quà tặng</h3>
+      <div><label class="lbl">Hội viên</label><select name="member_id" class="input" required id="gift-main">{% for m in members %}<option value="{{ m.id }}">{{ m.full_name }} ({{ m.member_code }})</option>{% endfor %}</select></div>
+      <div><label class="lbl">Tên quà</label><input name="title" class="input" value="Quà tri ân hội viên"></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="lbl">Giảm giá (%)</label><input name="percent" type="number" min="1" max="50" value="10" class="input"></div><div><label class="lbl">Hiệu lực (ngày)</label><input name="days" type="number" min="1" max="365" value="30" class="input"></div></div>
+      <div><label class="lbl">Lời nhắn</label><textarea name="message" rows="2" class="input" maxlength="300"></textarea></div>
+      <button class="btn btn-primary w-full"><span class="material-symbols-outlined text-[18px]">send</span>Gửi quà</button>
+    </form>
+    <div class="card p-5"><h3 class="font-head font-bold text-lg">Bảng xếp hạng gợi ý tặng quà</h3>
+      <div class="mt-3 divide-y divide-line">{% for r in ranked[:8] %}<div class="py-2.5 flex items-center gap-3">{{ ui.avatar(r.user, 36) }}<div class="flex-1 min-w-0"><div class="text-sm font-semibold truncate">{{ r.user.full_name }}</div><div class="text-xs text-muted">{{ r.score }} điểm · streak {{ r.user.streak or 0 }}</div></div>{{ ui.rank_badge(r.name) }}</div>{% endfor %}</div></div>
+  </div>
+{% endif %}
+</div>
+
+{% call ui.modal('m-gift', 'Gửi voucher gia hạn') %}
+  <form method="post" action="{{ url_for('manager.gift') }}" class="space-y-3">{{ ui.csrf() }}<input type="hidden" name="member_id" id="gift-member">
+    <div><label class="lbl">Tên quà</label><input name="title" class="input" value="Ưu đãi gia hạn gói tập"></div>
+    <div class="grid grid-cols-2 gap-3"><div><label class="lbl">Giảm giá (%)</label><input name="percent" type="number" min="1" max="50" value="10" class="input"></div><div><label class="lbl">Hiệu lực (ngày)</label><input name="days" type="number" value="14" class="input"></div></div>
+    <div><label class="lbl">Lời nhắn</label><input name="message" class="input" value="Gia hạn sớm để giữ chuỗi streak nhé!"></div>
+    <button class="btn btn-primary w-full">Gửi voucher</button></form>
+{% endcall %}
+{% endblock %}

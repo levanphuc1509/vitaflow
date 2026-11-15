@@ -1,0 +1,18 @@
+{% extends "m/base.html" %}
+{% block title %}Đăng ký{% endblock %}
+{% block body %}
+<div class="min-h-[100dvh] px-5 pb-8" style="padding-top:calc(env(safe-area-inset-top) + 2rem);--primary:244 114 182;--primary-dark:190 24 93;--accent:167 139 250;--soft:252 231 243;--btn:219 39 119">
+  <div class="text-center"><div class="w-14 h-14 mx-auto rounded-2xl text-white grid place-items-center font-head font-extrabold text-2xl" style="background:linear-gradient(135deg,#db2777,#8b5cf6)">{{ COMPANY_NAME[:1]|upper }}</div>
+    <h1 class="mt-3 font-head text-2xl font-extrabold">Tạo tài khoản thành viên</h1><p class="text-sm text-muted">Bắt đầu hành trình độ body cùng {{ COMPANY_NAME }} 💗</p></div>
+  <div class="seg mt-5"><a href="{{ url_for('auth.login') }}">Đăng Nhập</a><a href="{{ url_for('auth.register') }}" class="on">Đăng Ký</a></div>
+  <form method="post" class="card p-5 mt-4 space-y-4"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div><label class="lbl">Họ và tên</label><input name="full_name" class="input" autocomplete="name" required></div>
+    <div><label class="lbl">Email</label><input name="email" type="email" inputmode="email" autocomplete="email" class="input" required></div>
+    <div><label class="lbl">Số điện thoại</label><input name="phone" type="tel" inputmode="tel" class="input"></div>
+    <div><label class="lbl">Cơ sở tập</label><select name="branch_id" class="input">{% for b in branches %}<option value="{{ b.id }}">{{ b.name }}</option>{% endfor %}</select></div>
+    <div><label class="lbl">Mật khẩu (tối thiểu 6 ký tự)</label><input name="password" type="password" minlength="6" autocomplete="new-password" class="input" required></div>
+    <label class="flex items-start gap-2 text-sm text-muted"><input type="checkbox" name="agree" value="1" required class="mt-1 w-4 h-4"><span>Tôi đồng ý với <a href="{{ url_for('public.terms') }}" class="underline font-semibold" target="_blank">Điều khoản sử dụng</a> và <a href="{{ url_for('public.privacy') }}" class="underline font-semibold" target="_blank">Chính sách quyền riêng tư</a>, bao gồm việc không đăng nội dung phản cảm, quấy rối hoặc vi phạm pháp luật.</span></label>
+      <button class="btn w-full !py-3.5 text-white text-base" style="background:linear-gradient(135deg,#db2777,#8b5cf6)">Đăng ký</button>
+  </form>
+</div>
+{% endblock %}

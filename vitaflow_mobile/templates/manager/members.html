@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block title %}Tiến độ & Hồ sơ Body{% endblock %}
+{% block page_title %}Tiến độ thành viên &amp; Hồ sơ Body{% endblock %}
+{% block content %}
+<form method="get" class="flex flex-wrap items-center gap-3 mb-6">
+  <div class="card px-3 py-2 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[20px]">storefront</span>
+    <select name="branch" class="bg-transparent text-sm font-semibold outline-none" onchange="this.form.submit()"><option value="0">Tất cả cơ sở</option>{% for b in branches %}<option value="{{ b.id }}" {{ 'selected' if sel_branch == b.id }}>{{ b.name }}</option>{% endfor %}</select></div>
+  <select name="rank" class="input w-auto" onchange="this.form.submit()"><option value="">Mọi hạng</option>{% for r in ('Diamond','Gold','Silver','Bronze') %}<option {{ 'selected' if rank_f == r }}>{{ r }}</option>{% endfor %}</select>
+  <select name="coach" class="input w-auto" onchange="this.form.submit()"><option value="">Mọi Coach</option>{% for c in coaches %}<option value="{{ c.id }}" {{ 'selected' if coach_f == c.id }}>{{ c.full_name }}</option>{% endfor %}</select>
+  <div class="relative flex-1 min-w-[200px] max-w-sm"><span class="material-symbols-outlined absolute left-3 top-2 text-muted text-[20px]">search</span><input name="q" value="{{ q }}" class="input pl-10" placeholder="Tên, mã hội viên, email…"></div>
+  <span class="text-sm text-muted ml-auto">{{ total }} hội viên · rê chuột vào hội viên để xem hồ sơ Body</span>
+</form>
+
+{% for rank, items in groups.items() if items %}
+<section class="mb-8">
+  <div class="flex items-center gap-3 mb-3">{{ ui.rank_badge(rank) }}<span class="text-sm text-muted">{{ items|length }} hội viên</span><div class="flex-1 h-px bg-line"></div></div>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+    {% for r in items %}{% set m = r.user %}
+    <button type="button" data-card-url="{{ url_for('manager.member_card', uid=m.id) }}" class="card p-4 flex items-center gap-3 text-left hover:shadow-lg hover:-translate-y-0.5 transition">
+      {{ ui.avatar(m, 48) }}
+      <span class="min-w-0 flex-1"><span class="block font-semibold truncate">{{ m.full_name }}</span>
+        <span class="block text-xs text-muted truncate">{{ m.member_code }}{% if m.coach %} · {{ m.coach.first_name }}{% endif %}</span>
+        <span class="mt-1 flex items-center gap-2 text-xs"><span class="text-orange-600 font-semibold flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 1">local_fire_department</span>{{ m.streak or 0 }}</span><span class="text-muted">{{ r.score }} điểm</span></span></span>
+    </button>{% endfor %}
+  </div>
+</section>
+{% else %}<div class="card">{{ ui.empty('groups', 'Không có hội viên phù hợp bộ lọc.') }}</div>{% endfor %}
+{% endblock %}

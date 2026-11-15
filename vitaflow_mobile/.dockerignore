@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+instance/
+static/uploads/
+mobile-app/
+.env
+*.db
+.git

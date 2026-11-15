@@ -1,0 +1,45 @@
+{% extends "m/layout.html" %}
+{% block title %}Tổng quan{% endblock %}
+{% block content %}
+<div class="m-hero">
+  <div class="flex items-center justify-between text-xs text-white/85 relative z-10"><span id="live-clock">…</span>
+    {% if shift %}<span class="pill bg-white/20 text-white"><span class="live-dot !bg-white"></span>Đang diễn ra</span>{% endif %}</div>
+  {% if shift %}
+  <div class="relative z-10 mt-2 font-head text-2xl font-extrabold">{{ shift.name }} ({{ shift.start.strftime('%H:%M') }} - {{ shift.end.strftime('%H:%M') }})</div>
+  <div class="relative z-10 text-sm text-white/85">{{ shift.title }}</div>
+  <div class="relative z-10 mt-4 flex items-end justify-between"><div><span class="font-head text-5xl font-extrabold">{{ present|length }}</span><span class="text-white/80"> / {{ shift.capacity }} hội viên</span></div>
+    <div class="text-right text-xs">{{ [100, (present|length / shift.capacity * 100)|round]|min|int }}% công suất</div></div>
+  <div class="relative z-10 mt-2 h-2 rounded-full bg-white/25 overflow-hidden"><div class="h-full bg-white" style="width:{{ [100, (present|length / shift.capacity * 100)|round]|min }}%"></div></div>
+  <div class="relative z-10 mt-3 flex items-center gap-2 text-xs"><div class="flex -space-x-2">{% for c in on_duty %}<span class="ring-2 ring-white/70 rounded-full">{{ ui.avatar(c, 26) }}</span>{% endfor %}</div>{{ on_duty|length }} Coach đang trực · {{ branch.name }}</div>
+  {% else %}<div class="relative z-10 mt-3 text-white/90">Hiện không có ca nào đang diễn ra.</div>{% endif %}
+</div>
+<div id="weather" data-lat="{{ branch.lat }}" data-lng="{{ branch.lng }}" class="card mt-3 px-4 py-3 flex items-center gap-3"><span class="text-xs text-muted">Đang tải thời tiết…</span></div>
+
+<div class="mt-4 grid grid-cols-2 gap-3">
+  <div class="card p-4"><div class="text-xs text-muted">Hội viên</div><div class="font-head text-3xl font-extrabold">{{ kpi.members }}</div><div class="text-xs text-muted">{{ kpi.checkins_today }} lượt check-in hôm nay</div></div>
+  <div class="card p-4"><div class="text-xs text-muted">Coach hoạt động</div><div class="font-head text-3xl font-extrabold">{{ kpi.coaches }}</div></div>
+  <a href="{{ url_for('manager.rewards', tab='expiring') }}" class="card p-4"><div class="text-xs text-muted flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-amber-500">hourglass_top</span>Cần tái ký</div><div class="font-head text-3xl font-extrabold">{{ kpi.expiring }}</div><div class="text-xs text-primary-dark font-semibold">Xem ngay →</div></a>
+  <a href="{{ url_for('manager.nutrition') }}" class="card p-4"><div class="text-xs text-muted flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-rose-500">flag</span>Vấn đề chuyển tiếp</div><div class="font-head text-3xl font-extrabold">{{ kpi.escalations }}</div><div class="text-xs text-primary-dark font-semibold">Hỗ trợ gấp →</div></a>
+</div>
+<a href="{{ url_for('manager.rewards', tab='orders') }}" class="card mt-3 p-4 flex items-center gap-3 border-l-4 !border-l-amber-400">
+  <span class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 grid place-items-center"><span class="material-symbols-outlined">payments</span></span>
+  <div class="flex-1"><div class="font-semibold">{{ kpi.orders }} đơn nạp gói chờ duyệt</div><div class="text-xs text-muted">Cần Quản lý đối soát &amp; xác nhận</div></div>
+  <span class="btn btn-primary btn-sm">Duyệt</span></a>
+
+<div class="m-sec"><h2>Đội ngũ Coach</h2><a href="{{ url_for('manager.staff') }}" class="text-sm font-semibold text-primary-dark">Quản lý</a></div>
+<div class="grid grid-cols-2 gap-3">
+  {% for c in coaches %}<div class="card p-3"><div class="flex items-center gap-2">{{ ui.avatar(c, 40) }}<div class="min-w-0"><div class="font-semibold text-sm truncate">{{ c.full_name }}</div><div class="text-[11px] text-muted truncate">{{ c.specialty or c.title }}</div></div></div>
+    <div class="mt-2">{% if c in on_duty %}<span class="pill bg-emerald-100 text-emerald-700"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Đang đứng lớp</span>{% else %}<span class="pill bg-slate-100 text-slate-500">Ngoài ca</span>{% endif %}</div></div>
+  {% else %}<div class="col-span-2 card">{{ ui.empty('badge', 'Chưa có Coach nào.') }}</div>{% endfor %}
+</div>
+
+<div class="m-sec"><h2>Các ca hôm nay</h2></div>
+<div class="chips">
+  {% for r in shift_rows %}<a href="{{ url_for('manager.shifts', shift=r.shift.id) }}" class="card flex-none w-40 p-3 {{ 'ring-2 ring-primary' if r.state == 'live' }}">
+    <div class="flex items-center justify-between"><b class="text-sm">{{ r.shift.name }}</b><span class="pill {{ {'live':'bg-red-100 text-red-600','done':'bg-slate-100 text-slate-600','upcoming':'bg-amber-100 text-amber-700'}[r.state] }}">{{ {'live':'Live','done':'Xong','upcoming':'Sắp tới'}[r.state] }}</span></div>
+    <div class="text-xs text-muted mt-1">{{ r.shift.start.strftime('%H:%M') }} - {{ r.shift.end.strftime('%H:%M') }}</div>
+    <div class="text-sm mt-2"><b>{{ r.count }}</b>/{{ r.shift.capacity }} điểm danh</div></a>{% endfor %}
+</div>
+{% if present %}<div class="m-sec"><h2>Đang có mặt tại phòng tập</h2></div>
+<div class="flex flex-wrap gap-2">{% for m in present %}<button type="button" data-card-url="{{ url_for('manager.member_card', uid=m.id) }}" class="flex items-center gap-2 bg-white border border-line rounded-full pl-1 pr-3 py-1 text-sm">{{ ui.avatar(m, 26) }}{{ m.first_name }}</button>{% endfor %}</div>{% endif %}
+{% endblock %}

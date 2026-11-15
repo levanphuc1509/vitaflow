@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  {% if current_user.is_authenticated %}<meta name="vitaflow-auth" content="1">{% endif %}
+  <title>{% block title %}{{ COMPANY_NAME }}{% endblock %} · {{ COMPANY_NAME }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { managerGreen: '#006039', managerGold: '#C5A059', coachOrange: '#FF5A36', memberPink: '#F472B6', memberLavender: '#A78BFA',
+        primary: 'rgb(var(--primary) / <alpha-value>)', 'primary-dark': 'rgb(var(--primary-dark) / <alpha-value>)', accent: 'rgb(var(--accent) / <alpha-value>)',
+        canvas: 'rgb(var(--canvas) / <alpha-value>)', soft: 'rgb(var(--soft) / <alpha-value>)', ink: 'rgb(var(--ink) / <alpha-value>)',
+        muted: 'rgb(var(--muted) / <alpha-value>)', line: 'rgb(var(--line) / <alpha-value>)' },
+      fontFamily: { head: ['"Plus Jakarta Sans"', 'sans-serif'], body: ['Inter', 'sans-serif'] } } } }
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="is-mobile theme-{{ theme }} bg-canvas text-ink font-body antialiased">
+  <div id="toasts" class="fixed z-[200] flex flex-col gap-2 w-[min(92vw,380px)]">
+    {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}
+      <div class="toast toast-{{ cat }}" role="status"><span class="material-symbols-outlined text-[20px]">{{ {'success':'check_circle','error':'error','warning':'warning'}.get(cat,'info') }}</span><span>{{ m }}</span></div>
+    {% endfor %}{% endwith %}
+  </div>
+  {% block body %}{% endblock %}
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/native.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

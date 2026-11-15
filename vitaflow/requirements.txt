@@ -1,0 +1,11 @@
+Flask==3.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+SQLAlchemy>=2.0,<2.1
+alembic>=1.13,<2.0
+python-dotenv==1.0.1
+segno>=1.6
+itsdangerous>=2.2
+# AI thực đơn (tuỳ chọn - không có vẫn chạy bằng thực đơn dự phòng offline)
+google-genai>=1.51.0

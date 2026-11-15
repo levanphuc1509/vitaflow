@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block title %}Nhân sự & Cơ sở{% endblock %}
+{% block page_title %}Nhân sự &amp; Cơ sở{% endblock %}
+{% macro coach_fields(c=None) %}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="col-span-2"><label class="lbl">Họ và tên</label><input name="full_name" class="input" required value="{{ c.full_name if c }}"></div>
+    <div class="col-span-2"><label class="lbl">Email đăng nhập</label><input name="email" type="email" class="input" required value="{{ c.email if c }}"></div>
+    <div><label class="lbl">Số điện thoại</label><input name="phone" class="input" value="{{ c.phone or '' if c }}"></div>
+    <div><label class="lbl">Cơ sở</label><select name="branch_id" class="input">{% for b in branches %}<option value="{{ b.id }}" {{ 'selected' if c and c.branch_id == b.id }}>{{ b.name }}</option>{% endfor %}</select></div>
+    <div><label class="lbl">Chức danh</label><input name="title" class="input" value="{{ c.title or '' if c }}"></div>
+    <div><label class="lbl">Chuyên môn</label><input name="specialty" class="input" value="{{ c.specialty or '' if c }}"></div>
+    <div class="col-span-2"><label class="lbl">{{ 'Đặt lại mật khẩu (bỏ trống nếu giữ nguyên)' if c else 'Mật khẩu (tối thiểu 6 ký tự)' }}</label><input name="password" type="password" class="input" minlength="6" {{ '' if c else 'required' }}></div>
+  </div>
+{% endmacro %}
+{% block content %}
+<div class="flex flex-wrap items-center gap-3 mb-6">
+  {{ ui.branch_filter(sel_branch) }}
+  <form method="get" class="relative flex-1 min-w-[220px] max-w-md"><span class="material-symbols-outlined absolute left-3 top-2 text-muted text-[20px]">search</span>
+    <input name="q" value="{{ q }}" class="input pl-10" placeholder="Tìm Coach theo tên hoặc email…"></form>
+  <button class="btn btn-primary ml-auto" data-modal-open="m-add"><span class="material-symbols-outlined text-[20px]">person_add</span>Thêm Coach</button>
+</div>
+
+<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+  {% for c in coaches %}
+  <div class="card p-5 {{ '' if c.active else 'opacity-60' }}">
+    <div class="flex items-start gap-3">{{ ui.avatar(c, 56) }}
+      <div class="min-w-0 flex-1"><div class="font-head font-bold truncate">{{ c.full_name }}</div><div class="text-sm text-muted truncate">{{ c.title }}</div>
+        <div class="text-xs text-muted mt-0.5 truncate">{{ c.email }}</div></div>
+      <span class="pill {{ 'bg-emerald-100 text-emerald-700' if c.active else 'bg-slate-200 text-slate-600' }}">{{ 'Hoạt động' if c.active else 'Đã tắt' }}</span>
+    </div>
+    <div class="mt-3 flex flex-wrap gap-1.5"><span class="pill bg-soft text-primary-dark">{{ c.specialty or 'Chưa có chuyên môn' }}</span><span class="pill bg-slate-100 text-slate-600">{{ c.branch.name if c.branch else 'Chưa gán cơ sở' }}</span></div>
+    <div class="mt-4 flex items-center gap-2"><div class="flex -space-x-2">{% for s in c.students[:6] %}<span class="ring-2 ring-white rounded-full" title="{{ s.full_name }}">{{ ui.avatar(s, 30) }}</span>{% endfor %}</div>
+      <span class="text-sm text-muted">{{ c.students|length }} học viên</span></div>
+    <div class="mt-4 pt-4 border-t border-line flex flex-wrap gap-2">
+      <button class="btn btn-ghost btn-sm" data-modal-open="m-assign-{{ c.id }}"><span class="material-symbols-outlined text-[16px]">group_add</span>Học viên</button>
+      <button class="btn btn-outline btn-sm" data-modal-open="m-edit-{{ c.id }}"><span class="material-symbols-outlined text-[16px]">edit</span>Sửa</button>
+      <form method="post" action="{{ url_for('manager.staff_toggle', uid=c.id) }}">{{ ui.csrf() }}<button class="btn btn-outline btn-sm"><span class="material-symbols-outlined text-[16px]">{{ 'toggle_on' if c.active else 'toggle_off' }}</span>{{ 'Tắt' if c.active else 'Bật' }}</button></form>
+      <form method="post" action="{{ url_for('manager.staff_delete', uid=c.id) }}" class="ml-auto">{{ ui.csrf() }}<button class="btn btn-danger btn-sm" data-confirm="Xoá Coach {{ c.full_name }}? Học viên của Coach sẽ được bỏ gán."><span class="material-symbols-outlined text-[16px]">delete</span></button></form>
+    </div>
+  </div>
+
+  {% call ui.modal('m-edit-' ~ c.id, 'Sửa Coach') %}<form method="post" action="{{ url_for('manager.staff_edit', uid=c.id) }}">{{ ui.csrf() }}{{ coach_fields(c) }}<button class="btn btn-primary w-full mt-4">Lưu thay đổi</button></form>{% endcall %}
+  {% call ui.modal('m-assign-' ~ c.id, 'Học viên của ' ~ c.full_name, True) %}
+    <form method="post" action="{{ url_for('manager.staff_assign', uid=c.id) }}">{{ ui.csrf() }}
+      <input class="input mb-3" placeholder="Tìm học viên…" data-filter="#al-{{ c.id }} label">
+      <div id="al-{{ c.id }}" class="grid sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto">
+        {% for m in all_members %}<label class="flex items-center gap-3 p-2 rounded-xl border border-line hover:bg-soft/50 cursor-pointer">
+          <input type="checkbox" name="member_ids" value="{{ m.id }}" {{ 'checked' if m.coach_id == c.id }}>{{ ui.avatar(m, 32) }}
+          <span class="min-w-0"><span class="block text-sm font-semibold truncate">{{ m.full_name }}</span><span class="block text-[11px] text-muted truncate">{{ m.member_code }}{% if m.coach and m.coach_id != c.id %} · đang với {{ m.coach.first_name }}{% elif not m.coach %} · chưa có Coach{% endif %}</span></span></label>{% endfor %}
+      </div>
+      <button class="btn btn-primary w-full mt-4">Lưu danh sách học viên</button></form>
+  {% endcall %}
+  {% else %}<div class="md:col-span-2 xl:col-span-3 card">{{ ui.empty('badge', 'Không tìm thấy Coach nào.') }}</div>{% endfor %}
+</div>
+
+{% call ui.modal('m-add', 'Thêm Coach mới') %}<form method="post" action="{{ url_for('manager.staff_add') }}">{{ ui.csrf() }}{{ coach_fields() }}<button class="btn btn-primary w-full mt-4">Tạo tài khoản Coach</button></form>{% endcall %}
+{% endblock %}

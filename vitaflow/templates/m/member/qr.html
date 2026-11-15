@@ -1,0 +1,28 @@
+{% extends "m/layout.html" %}
+{% block title %}Mã QR của tôi{% endblock %}
+{% block content %}
+<div class="seg" id="qr-seg"><button type="button" class="on" data-p="mine">Mã QR của tôi</button><button type="button" data-p="scan">Quét mã ca tập</button></div>
+<div id="p-mine">
+  <div class="card mt-4 p-5 text-center">
+    <div class="flex items-center gap-3 text-left">{{ ui.avatar(current_user, 48) }}<div class="min-w-0"><div class="font-head font-bold truncate">{{ current_user.full_name }}</div><div class="text-sm text-muted">{{ current_user.member_code }}</div></div>
+      <div class="ml-auto">{{ ui.status_pill(status.gym.state, status.gym.days if status.gym.state in ('active','expiring') else none) }}</div></div>
+    <div class="mt-4 mx-auto w-[min(76vw,300px)] p-4 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/25"><div class="qr-box bg-white rounded-2xl p-3">{{ svg|safe }}</div></div>
+    <p class="mt-4 text-sm text-muted">Đưa mã này cho Coach quét tại quầy để điểm danh.</p>
+    {% if today_ck %}<div class="mt-3 rounded-xl bg-emerald-50 text-emerald-700 text-sm p-3 flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[20px]">check_circle</span>Đã điểm danh lúc {{ today_ck.at.strftime('%H:%M') }} hôm nay</div>{% endif %}
+    {% if status.gym.state in ('expired','none') %}<div class="mt-3 rounded-xl bg-red-50 text-red-700 text-sm p-3">Gói tập đã hết hạn — mã QR sẽ không điểm danh được. <a class="font-semibold underline" href="{{ url_for('member.shop') }}">Nạp gói</a></div>{% endif %}
+    <div class="mt-3 text-xs text-muted">Mã nhập tay: <b class="font-mono text-ink">{{ current_user.member_code }}</b></div>
+  </div>
+</div>
+<div id="p-scan" class="hidden">
+  <div class="card mt-4 p-5 text-center">
+    <span class="w-14 h-14 mx-auto rounded-2xl bg-soft text-primary-dark grid place-items-center"><span class="material-symbols-outlined text-3xl">qr_code_scanner</span></span>
+    <h2 class="font-head font-bold text-lg mt-2">Quét mã QR của ca tập</h2><p class="text-sm text-muted">Hướng camera vào mã QR đang hiển thị tại quầy Coach (mã tự đổi mỗi phút).</p>
+    <div id="shift-reader" class="mt-3 rounded-2xl overflow-hidden hidden"></div>
+    <button id="btn-scan-shift" type="button" class="btn btn-primary w-full mt-4"><span class="material-symbols-outlined text-[20px]">photo_camera</span>Bật / tắt camera</button>
+    <p id="shift-scan-msg" class="text-sm text-rose-600 mt-2"></p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/memberscan.js') }}"></script>
+<script>document.querySelectorAll('#qr-seg button').forEach(b => b.onclick = () => { document.querySelectorAll('#qr-seg button').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('p-mine').classList.toggle('hidden', b.dataset.p !== 'mine'); document.getElementById('p-scan').classList.toggle('hidden', b.dataset.p !== 'scan'); });</script>{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+{% block title %}Tổng quan{% endblock %}
+{% block page_title %}Tổng quan hệ thống{% endblock %}
+{% block topbar_extra %}{{ ui.branch_filter(sel_branch) }}{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+  <div>
+    <span class="pill bg-soft text-primary-dark px-3 py-1 uppercase tracking-wider">Quản lý chuỗi · {{ branch.name }}</span>
+    <h2 class="mt-2 font-head text-3xl font-extrabold tracking-tight">Xin chào, {{ current_user.first_name }} 👋</h2>
+    <p id="live-clock" class="text-muted text-sm mt-1">…</p>
+  </div>
+  <div class="card px-4 py-3 flex items-center gap-3 min-w-[190px]" id="weather" data-lat="{{ branch.lat }}" data-lng="{{ branch.lng }}"><span class="text-xs text-muted">Đang tải thời tiết…</span></div>
+</div>
+
+<div class="grid grid-cols-2 xl:grid-cols-7 gap-4">
+  {{ ui.stat('groups', 'Hội viên', kpi.members) }}
+  {{ ui.stat('badge', 'Coach', kpi.coaches) }}
+  {{ ui.stat('how_to_reg', 'Check-in hôm nay', kpi.checkins_today) }}
+  {{ ui.stat('hourglass_top', 'Sắp/đã hết hạn', kpi.expiring) }}
+  <a href="{{ url_for('manager.rewards', tab='orders') }}">{{ ui.stat('payments', 'Đơn chờ duyệt', kpi.orders) }}</a>
+  <a href="{{ url_for('manager.nutrition') }}">{{ ui.stat('flag', 'Vấn đề chuyển tiếp', kpi.escalations) }}</a>
+  <a href="{{ url_for('manager.reports') }}">{{ ui.stat('shield', 'Báo cáo vi phạm', kpi.reports) }}</a>
+</div>
+
+<div class="mt-6 grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 card p-6">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h3 class="font-head font-bold text-lg flex items-center gap-2">Ca đang diễn ra {% if shift %}<span class="pill bg-red-100 text-red-600"><span class="live-dot"></span>LIVE</span>{% endif %}</h3>
+      {% if shift %}<span class="text-sm text-muted">{{ shift.label }}</span>{% endif %}
+    </div>
+    {% if shift %}
+      <p class="text-sm text-muted mt-1">{{ shift.title }}</p>
+      <div class="mt-4 grid sm:grid-cols-2 gap-4">
+        <div class="rounded-2xl bg-soft/60 p-4"><div class="text-xs text-muted">Thành viên có mặt</div>
+          <div class="font-head text-3xl font-extrabold">{{ present|length }}<span class="text-base text-muted font-semibold"> / {{ shift.capacity }}</span></div>
+          <div class="h-2 rounded-full bg-white mt-2 overflow-hidden"><div class="h-full bg-primary rounded-full" style="width:{{ [100, (present|length / shift.capacity * 100)|round]|min }}%"></div></div></div>
+        <div class="rounded-2xl bg-soft/60 p-4"><div class="text-xs text-muted">Coach đang trực</div>
+          <div class="font-head text-3xl font-extrabold">{{ on_duty|length }}</div>
+          <div class="flex -space-x-2 mt-2">{% for c in on_duty %}<span class="ring-2 ring-white rounded-full" title="{{ c.full_name }}">{{ ui.avatar(c, 30) }}</span>{% endfor %}</div></div>
+      </div>
+      <div class="mt-4 text-xs font-semibold uppercase tracking-wider text-muted">Đang có mặt tại phòng tập</div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        {% for m in present %}<span class="flex items-center gap-2 bg-white border border-line rounded-full pl-1 pr-3 py-1 text-sm" data-card-url="{{ url_for('manager.member_card', uid=m.id) }}">{{ ui.avatar(m, 26) }}{{ m.first_name }}</span>
+        {% else %}<span class="text-sm text-muted">Chưa có hội viên nào điểm danh.</span>{% endfor %}
+      </div>
+    {% else %}
+      {{ ui.empty('bedtime', 'Hiện không có ca tập nào đang diễn ra.') }}
+    {% endif %}
+    <div class="mt-6 text-xs font-semibold uppercase tracking-wider text-muted">Các ca hôm nay</div>
+    <div class="mt-2 grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+      {% for r in shift_rows %}<a href="{{ url_for('manager.shifts', shift=r.shift.id) }}" class="rounded-2xl border border-line p-3 hover:shadow-md transition {{ 'ring-2 ring-primary' if r.state == 'live' }}">
+        <div class="flex items-center justify-between"><b class="text-sm">{{ r.shift.name }}</b><span class="pill {{ {'live':'bg-red-100 text-red-600','done':'bg-slate-100 text-slate-600','upcoming':'bg-amber-100 text-amber-700'}[r.state] }}">{{ {'live':'Đang diễn ra','done':'Đã xong','upcoming':'Sắp tới'}[r.state] }}</span></div>
+        <div class="text-xs text-muted mt-1">{{ r.shift.start.strftime('%H:%M') }} - {{ r.shift.end.strftime('%H:%M') }}</div>
+        <div class="text-sm mt-2"><b>{{ r.count }}</b>/{{ r.shift.capacity }} đã điểm danh</div></a>{% endfor %}
+    </div>
+  </div>
+
+  <div class="card p-6">
+    <div class="flex items-center justify-between"><h3 class="font-head font-bold text-lg">Coach đang hoạt động</h3><a href="{{ url_for('manager.staff') }}" class="text-sm font-semibold text-primary-dark">Quản lý</a></div>
+    <ul class="mt-4 space-y-3">
+      {% for c in coaches %}<li class="flex items-center gap-3">{{ ui.avatar(c, 42) }}
+        <div class="min-w-0 flex-1"><div class="font-semibold truncate">{{ c.full_name }}</div><div class="text-xs text-muted truncate">{{ c.specialty or c.title }}</div></div>
+        {% if c in on_duty %}<span class="pill bg-emerald-100 text-emerald-700"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Đang trực</span>{% else %}<span class="pill bg-slate-100 text-slate-500">Ngoài ca</span>{% endif %}</li>
+      {% else %}{{ ui.empty('badge', 'Chưa có Coach nào.') }}{% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

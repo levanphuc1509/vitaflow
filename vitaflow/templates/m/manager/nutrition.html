@@ -1,0 +1,23 @@
+{% extends "m/layout.html" %}
+{% set bare = (peer or group) %}
+{% block title %}Chat & Quà{% endblock %}
+{% block content %}
+{% if not bare %}
+<div class="seg"><a href="{{ url_for('manager.nutrition') }}" class="on">AI Dinh Dưỡng</a><a href="{{ url_for('manager.rewards') }}">Duyệt Gói &amp; Quà</a></div>
+{% set open_esc = escalations|selectattr('status', 'equalto', 'open')|list %}
+{% if open_esc %}
+<div class="m-sec"><h2 class="flex items-center gap-2"><span class="material-symbols-outlined text-rose-600">flag</span>Coach chuyển tiếp ({{ open_esc|length }})</h2></div>
+<div class="space-y-3">
+  {% for e in open_esc %}<div class="card p-4 border-l-4 !border-l-rose-500">
+    <div class="flex items-center gap-2">{{ ui.avatar(e.member, 36) }}<div class="min-w-0"><div class="font-semibold truncate">{{ e.member.full_name }}</div><div class="text-xs text-muted">từ Coach {{ e.coach.first_name }} · {{ e.created_at|time_ago }}</div></div></div>
+    <p class="mt-2 text-sm">{{ e.reason }}</p>
+    <div class="mt-3 grid grid-cols-2 gap-2"><a class="btn btn-ghost btn-sm" href="{{ url_for('manager.nutrition', peer=e.member_id) }}">Mở chat &amp; hồ sơ</a>
+      <form method="post" action="{{ url_for('manager.escalation_resolve', eid=e.id) }}">{{ ui.csrf() }}<button class="btn btn-primary btn-sm w-full">Đã xử lý</button></form></div></div>{% endfor %}
+</div>{% endif %}
+<div class="m-sec"><h2>Tin nhắn</h2></div>
+{% endif %}
+{% include "m/partials/chat.html" %}
+{% if side %}
+  {% call ui.modal('m-diet', 'Thực đơn & nhật ký ăn') %}{% set scoring = false %}{% include "partials/diet_side.html" %}{% endcall %}
+{% endif %}
+{% endblock %}

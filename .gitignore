@@ -1,0 +1,18 @@
+﻿.venv/
+venv/
+__pycache__/
+*.pyc
+node_modules/
+instance/*.db
+.env
+Temp_Claude/
+.idea/
+**/backups/*.db
+**/_encoding_backup/
+**/logs/*.log
+vitaflow_mobile/cloudflared.exe
+/fix_smoke.py
+/update_member*.py
+/update_web_pc.py
+/cách khởi động.txt
+*.py.bak*

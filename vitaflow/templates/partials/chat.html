@@ -1,0 +1,60 @@
+{# Messenger dùng chung. Biến: contacts, groups, peer, group, can_escalate #}
+{% import "partials/macros.html" as ui %}
+<div class="card overflow-hidden grid lg:grid-cols-[300px_1fr] h-[calc(100vh-10rem)] min-h-[520px]">
+  <div class="border-r border-line flex flex-col min-h-0 {{ 'hidden lg:flex' if peer or group }}">
+    <div class="p-3 border-b border-line"><div class="relative"><span class="material-symbols-outlined absolute left-3 top-2 text-muted text-[20px]">search</span>
+      <input class="input pl-10" placeholder="Tìm cuộc trò chuyện…" data-filter="#chat-contacts [data-contact]"></div></div>
+    <div id="chat-contacts" class="flex-1 overflow-y-auto p-2 space-y-1">
+      {% if groups %}<div class="px-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-muted">Nhóm theo ca</div>
+        {% for g in groups %}
+          <a data-contact href="{{ url_for(request.endpoint, shift=g.id) }}" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-soft/60 {{ 'bg-soft' if group and group.id == g.id }}">
+            <span class="w-10 h-10 rounded-full bg-soft text-primary-dark grid place-items-center"><span class="material-symbols-outlined">groups</span></span>
+            <span class="min-w-0"><span class="block text-sm font-semibold truncate">{{ g.name }} · {{ g.branch.name }}</span><span class="block text-xs text-muted">{{ g.start.strftime('%H:%M') }}-{{ g.end.strftime('%H:%M') }}</span></span></a>
+        {% endfor %}{% endif %}
+      <div class="px-2 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted">Trực tiếp</div>
+      {% for c in contacts %}
+        <a data-contact href="{{ url_for(request.endpoint, peer=c.user.id) }}" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-soft/60 {{ 'bg-soft' if peer and peer.id == c.user.id }}">
+          {{ ui.avatar(c.user, 40) }}
+          <span class="min-w-0 flex-1"><span class="flex items-center gap-1.5 text-sm font-semibold truncate">{{ c.user.full_name }}
+              {% if c.user.role != 'member' %}<span class="pill bg-soft text-primary-dark">{{ ROLE_LABEL[c.user.role] }}</span>{% endif %}</span>
+            <span class="block text-xs text-muted truncate">{{ c.last.body[:40] if c.last and c.last.body else ('📷 Hình ảnh' if c.last else 'Bắt đầu trò chuyện') }}</span></span>
+          {% if c.unread %}<span class="badge-dot">{{ c.unread }}</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="flex flex-col min-h-0 {{ '' if peer or group else 'hidden lg:flex' }}">
+    {% if peer or group %}
+      <div class="px-4 py-3 border-b border-line flex items-center gap-3">
+        <a href="{{ url_for(request.endpoint) }}" class="lg:hidden icon-btn"><span class="material-symbols-outlined">arrow_back</span></a>
+        {% if peer %}{{ ui.avatar(peer, 40) }}<div class="min-w-0"><div class="font-semibold truncate">{{ peer.full_name }}</div>
+          <div class="text-xs text-muted">{{ ROLE_LABEL[peer.role] }}{{ ' · ' ~ peer.member_code if peer.member_code }}</div></div>
+        {% else %}<span class="w-10 h-10 rounded-full bg-soft text-primary-dark grid place-items-center"><span class="material-symbols-outlined">groups</span></span>
+          <div><div class="font-semibold">Nhóm {{ group.name }} · {{ group.branch.name }}</div><div class="text-xs text-muted">{{ group.title or 'Nhóm chat của ca tập' }}</div></div>{% endif %}
+        {% if can_escalate and peer and peer.role == 'member' %}
+          <button class="btn btn-ghost btn-sm ml-auto" data-modal-open="m-escalate"><span class="material-symbols-outlined text-[18px]">flag</span><span class="hidden sm:inline">Chuyển tiếp lên Quản lý</span></button>{% endif %}
+      </div>
+      <div id="chat" data-peer="{{ peer.id if peer }}" data-shift="{{ group.id if group }}" class="flex-1 min-h-0 flex flex-col">
+        <div id="chat-list" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+        <form id="chat-form" class="p-3 border-t border-line flex items-center gap-2" enctype="multipart/form-data">
+          <label class="icon-btn cursor-pointer" title="Gửi ảnh"><span class="material-symbols-outlined">image</span><input type="file" name="image" accept="image/*" class="hidden"></label>
+          <input name="body" class="input flex-1" placeholder="Nhập tin nhắn…" autocomplete="off" maxlength="2000">
+          <button class="btn btn-primary" aria-label="Gửi"><span class="material-symbols-outlined text-[20px]">send</span></button>
+        </form>
+        <div id="chat-file-name" class="px-4 pb-2 text-xs text-muted empty:hidden"></div>
+      </div>
+    {% else %}
+      <div class="flex-1 grid place-items-center text-center text-muted p-8"><div><span class="material-symbols-outlined text-6xl opacity-40">forum</span><p class="mt-2">Chọn một cuộc trò chuyện để bắt đầu.</p></div></div>
+    {% endif %}
+  </div>
+</div>
+{% if can_escalate and peer and peer.role == 'member' %}
+  {% call ui.modal('m-escalate', 'Chuyển tiếp lên Quản lý') %}
+    <form id="escalate-form"><input type="hidden" name="member_id" value="{{ peer.id }}">
+      <label class="lbl">Vấn đề cần Quản lý hỗ trợ ({{ peer.full_name }})</label>
+      <textarea name="reason" class="input" rows="4" maxlength="500" required placeholder="VD: Học viên đau gối, cần đổi gói phục hồi…"></textarea>
+      <button class="btn btn-primary w-full mt-4"><span class="material-symbols-outlined text-[18px]">flag</span>Gửi cho Quản lý</button></form>
+  {% endcall %}
+{% endif %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>

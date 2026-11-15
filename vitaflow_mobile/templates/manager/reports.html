@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block title %}Kiểm duyệt nội dung{% endblock %}
+{% block page_title %}Kiểm duyệt nội dung{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto"><p class="text-sm text-muted mb-3">Báo cáo vi phạm từ hội viên — cần xử lý trong vòng 24 giờ.</p><div class="flex gap-2 mb-4 flex-wrap">{% for k, l in (('open','Chờ xử lý'),('removed','Đã gỡ'),('dismissed','Đã bỏ qua')) %}<a href="{{ url_for('manager.reports', status=k) }}" class="tab {{ 'tab-active' if status == k }}">{{ l }}{% if k == 'open' and open_count %} ({{ open_count }}){% endif %}</a>{% endfor %}</div>
+<div class="space-y-3">{% for x in rows %}{% set r = x.r %}
+<div class="card p-4">
+  <div class="flex items-start gap-3">{% if x.target %}{{ ui.avatar(x.target, 42) }}{% endif %}
+    <div class="min-w-0 flex-1"><div class="font-semibold">{{ x.target.full_name if x.target else 'Người dùng đã xoá' }} <span class="text-xs text-muted font-normal">· bị báo cáo {{ r.created_at|time_ago }}</span></div>
+      <div class="text-xs text-muted">Người báo cáo: {{ x.reporter.full_name if x.reporter else '—' }}</div></div>
+    <span class="pill {{ {'open':'bg-amber-100 text-amber-700','removed':'bg-red-100 text-red-700','dismissed':'bg-slate-100 text-slate-600'}[r.status] }}">{{ {'open':'Chờ xử lý','removed':'Đã gỡ','dismissed':'Đã bỏ qua'}[r.status] }}</span></div>
+  <div class="mt-3 rounded-xl bg-soft/60 p-3 text-sm">
+    {% if x.post %}<div class="text-[11px] font-bold uppercase text-muted mb-1">Bài viết</div>{% if x.post.body %}<p class="whitespace-pre-line">{{ x.post.body }}</p>{% endif %}{% if x.post.image_url %}<img src="{{ x.post.image_url }}" class="mt-2 rounded-lg max-h-48 object-cover" alt="">{% endif %}
+    {% elif x.comment %}<div class="text-[11px] font-bold uppercase text-muted mb-1">Bình luận</div><p>{{ x.comment.body }}</p>
+    {% else %}<p class="text-muted">Nội dung đã bị gỡ hoặc không còn tồn tại.</p>{% endif %}</div>
+  <div class="mt-2 text-sm"><b>Lý do:</b> {{ r.reason or '—' }}</div>
+  {% if r.status == 'open' %}<div class="mt-3 grid grid-cols-3 gap-2">
+    <form method="post" action="{{ url_for('manager.report_action', rid=r.id, action='dismiss') }}">{{ ui.csrf() }}<button class="btn btn-outline btn-sm w-full">Bỏ qua</button></form>
+    <form method="post" action="{{ url_for('manager.report_action', rid=r.id, action='remove') }}">{{ ui.csrf() }}<button class="btn btn-ghost btn-sm w-full" data-confirm="Gỡ nội dung này?">Gỡ nội dung</button></form>
+    <form method="post" action="{{ url_for('manager.report_action', rid=r.id, action='suspend') }}">{{ ui.csrf() }}<button class="btn btn-danger btn-sm w-full" data-confirm="Gỡ nội dung và khoá tài khoản người đăng?">Gỡ + khoá TK</button></form></div>{% endif %}
+</div>
+{% else %}<div class="card">{{ ui.empty('verified_user', 'Không có báo cáo nào.') }}</div>{% endfor %}</div></div>
+{% endblock %}

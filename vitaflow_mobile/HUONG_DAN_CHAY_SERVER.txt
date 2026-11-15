@@ -1,0 +1,25 @@
+VITAFLOW - MỞ SERVER ĐỂ KIỂM TRA TRÊN ĐIỆN THOẠI
+
+Mỗi lần muốn mở server:
+1. Kết nối máy tính và điện thoại vào cùng một Wi-Fi.
+2. Mở terminal trong thư mục vitaflow_mobile.
+3. Chạy lệnh:
+
+   powershell -NoProfile -ExecutionPolicy Bypass -File .\CHAY_SERVER.ps1
+
+Script tự tìm IP Wi-Fi (nếu Wi-Fi đang kết nối), cập nhật server.url trong
+mobile-app\capacitor.config.json và kiểm tra server phản hồi. Máy tính sẽ tự mở
+http://127.0.0.1:5000/; điện thoại cùng Wi-Fi mở địa chỉ LAN được in trong terminal.
+Hai địa chỉ cùng trỏ tới một server.
+
+Nếu Windows Firewall hỏi, cho phép kết nối trên mạng Private. Điện thoại và máy tính
+phải cùng mạng; không dùng Wi-Fi Guest có bật tính năng cách ly thiết bị.
+
+Nhấn Ctrl+Alt+M trong terminal để dừng server.
+
+LƯU Ý CHO APP ANDROID/iOS:
+Địa chỉ server.url mới được lưu vào capacitor.config.json. APK đã cài sẵn không tự nhận
+địa chỉ mới; cần cap sync, build và cài lại app để cập nhật URL trong APK.
+
+Nếu trang vẫn hiện tên cũ, hãy dừng server cũ, chạy lệnh ở đúng thư mục vitaflow_mobile
+rồi tải lại trang. Các tin nhắn demo cũ trong database có thể vẫn chứa tên cũ.

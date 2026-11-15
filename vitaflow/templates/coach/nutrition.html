@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}Dinh dưỡng AI & Chat{% endblock %}
+{% block page_title %}Dinh dưỡng AI &amp; Chat 1:1{% endblock %}
+{% block content %}
+{% set can_escalate = true %}
+<div class="grid xl:grid-cols-[1fr_340px] gap-5">
+  <div>{% include "partials/chat.html" %}</div>
+  <div class="card p-5 h-fit">
+    {% if side %}{% set scoring = true %}{% include "partials/diet_side.html" %}
+    {% else %}<p class="text-sm text-muted text-center py-6">Chọn một học viên để xem thực đơn AI, bài tập trong ngày và chấm điểm mâm cơm.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

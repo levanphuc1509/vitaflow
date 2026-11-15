@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block title %}Tổng quan Coach{% endblock %}
+{% block page_title %}Tổng quan của Coach{% endblock %}
+{% block content %}
+<div class="mb-6"><span class="pill bg-soft text-primary-dark px-3 py-1 uppercase tracking-wider">{{ current_user.specialty or 'Huấn luyện viên' }}</span>
+  <h2 class="mt-2 font-head text-3xl font-extrabold tracking-tight">Chào {{ current_user.first_name }}, hôm nay thật năng lượng! 🔥</h2></div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  {{ ui.stat('groups', 'Học viên phụ trách', kpi.students) }}
+  {{ ui.stat('how_to_reg', 'Đã tập hôm nay', kpi.present, 'trên ' ~ kpi.students ~ ' học viên') }}
+  {{ ui.stat('hourglass_top', 'Cần nhắc gia hạn', kpi.expiring) }}
+  <a href="{{ url_for('coach.nutrition') }}">{{ ui.stat('chat', 'Tin nhắn chưa đọc', kpi.unread) }}</a>
+</div>
+
+<div class="mt-6 grid lg:grid-cols-3 gap-6">
+  <div class="card p-5 h-fit">
+    <h3 class="font-head font-bold text-lg">{{ 'Ca đang trực' if focus_state == 'live' else 'Ca kế tiếp' }}</h3>
+    {% if focus %}
+      <div class="mt-3 rounded-2xl p-4 bg-primary text-white relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/15"></div>
+        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">{% if focus_state == 'live' %}<span class="live-dot !bg-white"></span>Đang diễn ra{% else %}Sắp tới{% endif %}</div>
+        <div class="font-head text-2xl font-extrabold mt-1">{{ focus.name }} · {{ focus.start.strftime('%H:%M') }}-{{ focus.end.strftime('%H:%M') }}</div>
+        <div class="text-sm text-white/90 mt-1">{{ focus.title }}</div>
+        <div class="text-xs text-white/80 mt-2">{{ focus.branch.name }}</div></div>
+      <a href="{{ url_for('coach.checkin', shift=focus.id) }}" class="btn btn-primary w-full mt-3"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span>Mở trạm điểm danh</a>
+      <div class="mt-4 text-xs font-semibold uppercase tracking-wider text-muted">Ca của tôi</div>
+      <div class="mt-2 space-y-2">{% for s in shifts %}<div class="flex items-center justify-between text-sm"><span>{{ s.name }} · {{ s.start.strftime('%H:%M') }}</span><span class="pill {{ {'live':'bg-red-100 text-red-600','done':'bg-slate-100 text-slate-500','upcoming':'bg-amber-100 text-amber-700'}[states[s.id]] }}">{{ {'live':'Đang diễn ra','done':'Đã xong','upcoming':'Sắp tới'}[states[s.id]] }}</span></div>{% endfor %}</div>
+    {% else %}{{ ui.empty('event_busy', 'Bạn chưa được gán ca nào. Liên hệ Quản lý.') }}{% endif %}
+  </div>
+
+  <div class="lg:col-span-2 card p-5">
+    <div class="flex items-center justify-between"><h3 class="font-head font-bold text-lg">Học viên của tôi</h3><a class="text-sm font-semibold text-primary-dark" href="{{ url_for('coach.progress') }}">Xem tiến độ</a></div>
+    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+      {% for r in rows %}
+      <button type="button" data-card-url="{{ url_for('coach.student_card', uid=r.user.id) }}" class="group flex flex-col items-center text-center p-3 rounded-2xl hover:bg-soft/60 transition">
+        <span class="relative">
+          <span class="block rounded-full p-[3px] {{ 'bg-gradient-to-tr from-primary to-accent' if r.today else 'bg-line' }}"><span class="block rounded-full bg-white p-[2px]">{{ ui.avatar(r.user, 64) }}</span></span>
+          {% if r.status.gym.state in ('expiring','expired','none') %}<span class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full grid place-items-center text-white text-[11px] font-bold {{ 'bg-red-500' if r.status.gym.state != 'expiring' else 'bg-amber-500' }}">!</span>{% endif %}
+        </span>
+        <span class="mt-2 text-sm font-semibold leading-tight">{{ r.user.full_name }}</span>
+        <span class="mt-1">{{ ui.rank_badge(r.rank.name) }}</span>
+      </button>{% else %}<div class="col-span-full">{{ ui.empty('groups', 'Bạn chưa có học viên nào được phân công.') }}</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

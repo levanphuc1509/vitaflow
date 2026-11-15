@@ -1,0 +1,8 @@
+{% extends "m/layout.html" %}
+{% set bare = (peer or group) %}
+{% set back_url = url_for('member.profile') %}
+{% block title %}Tin nhắn{% endblock %}
+{% block content %}
+{% if not bare %}<h1 class="font-head text-2xl font-extrabold mb-3">Hộp thoại</h1>{% endif %}
+{% include "m/partials/chat.html" %}
+{% endblock %}

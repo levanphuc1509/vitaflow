@@ -1,0 +1,30 @@
+{% extends "m/layout.html" %}
+{% set back_url = url_for('member.profile') %}
+{% block title %}Gói tập của tôi{% endblock %}
+{% block content %}
+{% for key, label, icon in (('gym','Gói Gym','fitness_center'),('coach','Gói Coach 1:1','sports')) %}{% set s = status[key] %}
+<div class="{{ 'm-hero' if loop.first else 'card p-5' }} {{ 'mt-3' if not loop.first }}">
+  <div class="relative z-10 flex items-center justify-between"><div class="flex items-center gap-2 font-head font-bold"><span class="material-symbols-outlined">{{ icon }}</span>{{ label }}</div>{{ ui.status_pill(s.state, s.days if s.state in ('active','expiring') else none) }}</div>
+  {% if s.expires %}<div class="relative z-10 mt-3 flex items-end justify-between"><div class="font-head text-4xl font-extrabold">{{ [s.days, 0]|max }}<span class="text-base font-semibold {{ 'text-white/80' if loop.first else 'text-muted' }}"> ngày còn lại</span></div><div class="text-xs text-right {{ 'text-white/80' if loop.first else 'text-muted' }}">Hết hạn<br><b>{{ s.expires.strftime('%d/%m/%Y') }}</b></div></div>
+    <div class="relative z-10 mt-3 h-2.5 rounded-full {{ 'bg-white/25' if loop.first else 'bg-soft' }} overflow-hidden"><div class="h-full rounded-full {{ 'bg-white' if loop.first else 'bg-gradient-to-r from-primary to-accent' }}" style="width:{{ [100, ([s.days, 0]|max / 180 * 100)|round]|min }}%"></div></div>
+  {% else %}<p class="relative z-10 mt-3 text-sm {{ 'text-white/85' if loop.first else 'text-muted' }}">Bạn chưa đăng ký {{ label.lower() }}.</p>{% endif %}
+</div>{% endfor %}
+<a href="{{ url_for('member.shop') }}" class="btn btn-primary w-full mt-3 !py-3"><span class="material-symbols-outlined text-[20px]">add_card</span>Gia hạn (cộng dồn ngày tập)</a>
+{% if current_user.coach %}<div class="card mt-3 p-4 flex items-center gap-3">{{ ui.avatar(current_user.coach, 46) }}<div class="min-w-0 flex-1"><div class="text-xs text-muted">Coach phụ trách</div><div class="font-semibold truncate">{{ current_user.coach.full_name }}</div></div><a class="btn btn-outline btn-sm" href="{{ url_for('member.messages', peer=current_user.coach_id) }}">Nhắn tin</a></div>{% endif %}
+
+<div class="m-sec"><h2>Khám phá gói dịch vụ</h2><a href="{{ url_for('member.shop') }}" class="text-sm font-semibold text-primary-dark">Tất cả</a></div>
+<div class="chips">{% for p in plans %}<a href="{{ url_for('member.shop', plan=p.id) }}" class="card flex-none w-52 p-4"><span class="pill bg-soft text-primary-dark">{{ {'gym':'Gym','coach':'Coach 1:1','combo':'Combo'}[p.kind] }}</span>
+  <div class="mt-2 font-head font-bold leading-tight">{{ p.name }}</div><div class="font-head text-xl font-extrabold mt-1">{{ p.price|vnd }}<span class="text-xs text-muted font-medium">đ</span></div><div class="text-xs text-muted mt-1 line-clamp-2">{{ p.perks }}</div><div class="btn btn-ghost btn-sm w-full mt-3">Đăng ký ngay</div></a>{% endfor %}</div>
+
+<form method="post" action="{{ url_for('member.freeze') }}" class="card mt-4 p-4 space-y-3">{{ ui.csrf() }}
+  <h3 class="font-head font-bold flex items-center gap-2"><span class="material-symbols-outlined text-primary">pause_circle</span>Xin bảo lưu thẻ</h3>
+  <p class="text-sm text-muted">Tạm dừng gói khi đi công tác, ốm hoặc nghỉ thai sản. Quản lý duyệt xong, ngày bảo lưu được cộng bù vào hạn gói.</p>
+  <div class="grid grid-cols-3 gap-3"><div><label class="lbl">Số ngày (7-60)</label><input name="days" type="number" inputmode="numeric" min="7" max="60" value="14" class="input"></div><div class="col-span-2"><label class="lbl">Lý do</label><input name="reason" class="input" maxlength="300"></div></div>
+  <button class="btn btn-primary w-full" {{ 'disabled' if pending_freeze }}>{{ 'Đang chờ Quản lý duyệt…' if pending_freeze else 'Gửi yêu cầu bảo lưu' }}</button>
+  {% for f in freezes %}<div class="flex items-center justify-between text-sm"><span>{{ f.days }} ngày · {{ f.created_at.strftime('%d/%m') }}</span><span class="pill {{ {'pending':'bg-amber-100 text-amber-700','approved':'bg-emerald-100 text-emerald-700','rejected':'bg-red-100 text-red-700'}[f.status] }}">{{ {'pending':'Chờ duyệt','approved':'Đã duyệt','rejected':'Từ chối'}[f.status] }}</span></div>{% endfor %}
+</form>
+<div class="m-sec"><h2>Lịch sử nạp gói</h2></div>
+<div class="card p-2">{% for o in orders %}<div class="p-2.5 flex items-center gap-3 text-sm"><div class="flex-1 min-w-0"><div class="font-semibold truncate">{{ o.plan.name }}</div><div class="text-xs text-muted">{{ o.created_at.strftime('%d/%m/%Y %H:%M') }} · {{ o.amount|vnd }}đ</div></div>
+  {% if o.status == 'pending' %}<a href="{{ url_for('member.order', oid=o.id) }}" class="btn btn-primary btn-sm">Thanh toán</a>{% else %}<span class="pill {{ {'claimed':'bg-amber-100 text-amber-700','confirmed':'bg-emerald-100 text-emerald-700','rejected':'bg-red-100 text-red-700'}[o.status] }}">{{ {'claimed':'Chờ xác nhận','confirmed':'Đã xác nhận','rejected':'Từ chối'}[o.status] }}</span>{% endif %}</div>
+{% else %}<p class="p-3 text-sm text-muted">Chưa có giao dịch nào.</p>{% endfor %}</div>
+{% endblock %}

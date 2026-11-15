@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Đăng ký{% endblock %}
+{% block body %}
+<div class="min-h-screen grid place-items-center p-6 bg-canvas" style="--primary:244 114 182;--primary-dark:190 24 93;--accent:167 139 250;--soft:252 231 243;--btn:219 39 119">
+  <div class="w-full max-w-md">
+    <a href="{{ url_for('public.landing') }}" class="flex items-center gap-2 justify-center mb-6"><span class="w-10 h-10 rounded-xl bg-primary text-white grid place-items-center font-head font-extrabold">{{ COMPANY_NAME[:1]|upper }}</span><span class="font-head font-extrabold text-xl">{{ COMPANY_NAME }}</span></a>
+    <form method="post" class="card p-6 space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><h1 class="font-head text-2xl font-extrabold">Tạo tài khoản thành viên</h1><p class="text-sm text-muted">Bắt đầu hành trình độ body cùng {{ COMPANY_NAME }} 💗</p></div>
+      <div><label class="lbl">Họ và tên</label><input name="full_name" class="input" required></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="lbl">Email</label><input name="email" type="email" class="input" required></div>
+        <div><label class="lbl">Số điện thoại</label><input name="phone" class="input"></div></div>
+      <div><label class="lbl">Cơ sở tập</label><select name="branch_id" class="input">{% for b in branches %}<option value="{{ b.id }}">{{ b.name }}</option>{% endfor %}</select></div>
+      <div><label class="lbl">Mật khẩu (tối thiểu 6 ký tự)</label><input name="password" type="password" minlength="6" class="input" required></div>
+      <label class="flex items-start gap-2 text-sm text-muted"><input type="checkbox" name="agree" value="1" required class="mt-1 w-4 h-4"><span>Tôi đồng ý với <a href="{{ url_for('public.terms') }}" class="underline font-semibold" target="_blank">Điều khoản sử dụng</a> và <a href="{{ url_for('public.privacy') }}" class="underline font-semibold" target="_blank">Chính sách quyền riêng tư</a>, bao gồm việc không đăng nội dung phản cảm, quấy rối hoặc vi phạm pháp luật.</span></label>
+      <button class="btn btn-primary w-full py-3" style="background:linear-gradient(135deg,#db2777,#8b5cf6)">Đăng ký</button>
+      <p class="text-sm text-center text-muted">Đã có tài khoản? <a href="{{ url_for('auth.login') }}" class="font-semibold" style="color:#be185d">Đăng nhập</a></p>
+    </form>
+  </div>
+</div>
+{% endblock %}

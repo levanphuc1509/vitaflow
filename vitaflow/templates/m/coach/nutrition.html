@@ -1,0 +1,12 @@
+{% extends "m/layout.html" %}
+{% set bare = (peer or group) %}
+{% block title %}Chat & AI{% endblock %}
+{% block content %}
+{% set can_escalate = true %}
+{% if not bare %}
+<div class="m-hero"><div class="relative z-10 font-head text-xl font-extrabold">Dinh dưỡng AI &amp; Chat 1:1</div><div class="relative z-10 text-sm text-white/90 mt-1">Chấm mâm cơm, tư vấn và chuyển tiếp vấn đề lên Quản lý</div></div>
+<div class="mt-4"></div>
+{% endif %}
+{% include "m/partials/chat.html" %}
+{% if side %}{% call ui.modal('m-diet', 'Thực đơn AI & chấm điểm') %}{% set scoring = true %}{% include "partials/diet_side.html" %}{% endcall %}{% endif %}
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "m/layout.html" %}
+{% block title %}Hồ sơ Body{% endblock %}
+{% block content %}
+<div class="m-hero"><div class="relative z-10 text-xs font-semibold uppercase tracking-wider text-white/80">Chỉ số toàn sàn</div>
+  <div class="relative z-10 font-head text-4xl font-extrabold mt-1">{{ total }}<span class="text-lg font-semibold text-white/80"> hội viên</span></div>
+  <div class="relative z-10 text-sm text-white/85">Chạm vào hội viên để xem hồ sơ Body &amp; ảnh Before/After</div></div>
+<form method="get" class="mt-3 space-y-2">
+  <div class="relative"><span class="material-symbols-outlined absolute left-3.5 top-2.5 text-muted text-[20px]">search</span><input name="q" value="{{ q }}" class="input pl-11 !rounded-full" placeholder="Tên, mã hội viên, email…"></div>
+  <div class="flex gap-2"><select name="coach" class="input !py-2" onchange="this.form.submit()"><option value="">Mọi Coach</option>{% for c in coaches %}<option value="{{ c.id }}" {{ 'selected' if coach_f == c.id }}>{{ c.full_name }}</option>{% endfor %}</select>
+    <input type="hidden" name="rank" value="{{ rank_f }}"></div>
+  <div class="chips">{% for r in ('', 'Diamond', 'Gold', 'Silver', 'Bronze') %}<a class="chip {{ 'on' if rank_f == r }}" href="{{ url_for('manager.members', rank=r, q=q, coach=coach_f) }}">{{ r or 'Tất cả' }}</a>{% endfor %}</div>
+</form>
+{% for rank, items in groups.items() if items %}
+<div class="m-sec"><h2 class="flex items-center gap-2">{{ ui.rank_badge(rank) }}<span class="text-sm font-medium text-muted">{{ items|length }} hội viên</span></h2></div>
+<div class="space-y-3">
+  {% for r in items %}{% set m = r.user %}
+  <button type="button" data-card-url="{{ url_for('manager.member_card', uid=m.id) }}" class="card p-4 w-full text-left flex items-center gap-3 active:scale-[.99] transition">
+    {{ ui.avatar(m, 52) }}
+    <span class="min-w-0 flex-1"><span class="block font-semibold truncate">{{ m.full_name }}</span>
+      <span class="block text-xs text-muted truncate">{{ m.member_code }}{% if m.coach %} · Coach {{ m.coach.first_name }}{% endif %}</span>
+      <span class="mt-1.5 flex items-center gap-3 text-xs"><span class="text-orange-600 font-semibold flex items-center gap-0.5"><span class="material-symbols-outlined text-[15px]" style="font-variation-settings:'FILL' 1">local_fire_department</span>{{ m.streak or 0 }} ngày</span><span class="text-muted">{{ r.score }} điểm</span></span></span>
+    <span class="material-symbols-outlined text-muted">chevron_right</span>
+  </button>{% endfor %}
+</div>
+{% else %}<div class="card mt-4">{{ ui.empty('groups', 'Không có hội viên phù hợp bộ lọc.') }}</div>{% endfor %}
+{% endblock %}

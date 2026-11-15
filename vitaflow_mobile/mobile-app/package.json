@@ -1,0 +1,29 @@
+{
+  "name": "vitaflow-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vỏ app Android/iOS (Capacitor) cho VitaFlow",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "configure": "node scripts/configure.js",
+    "add:android": "cap add android && node scripts/patch-native.js android",
+    "add:ios": "cap add ios && node scripts/patch-native.js ios",
+    "assets": "capacitor-assets generate --iconBackgroundColor '#006039' --splashBackgroundColor '#F4F6F5' --splashBackgroundColorDark '#0C1E16'",
+    "sync": "cap sync",
+    "android": "cap open android",
+    "ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
+    "@capacitor/push-notifications": "^8.1.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor-mlkit/barcode-scanning": "^8.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0"
+  }
+}

@@ -1,0 +1,27 @@
+{% extends "m/layout.html" %}
+{% set back_url = url_for('member.profile') %}
+{% block title %}Bảng vàng & Ví quà{% endblock %}
+{% block content %}
+<div class="m-hero">
+  <div class="relative z-10 flex items-center justify-between"><div class="flex items-center gap-3">{{ ui.avatar(current_user, 52) }}<div><div class="font-head font-bold text-lg leading-tight">{{ current_user.full_name }}</div>{{ ui.rank_badge(mine.name) }}</div></div>
+    <div class="text-right"><div class="font-head text-4xl font-extrabold">{{ mine.score }}</div><div class="text-xs text-white/85">điểm{% if position %} · Top {{ position }}{% endif %}</div></div></div>
+  {% if nxt %}<div class="relative z-10 mt-4 flex justify-between text-xs"><span>Tiến tới {{ nxt }}</span><b>còn {{ need }} điểm</b></div>
+    <div class="relative z-10 mt-1 h-2.5 rounded-full bg-white/25 overflow-hidden"><div class="h-full bg-white rounded-full" style="width:{{ [100, (mine.score / nxt_total * 100)|round]|min }}%"></div></div>
+  {% else %}<div class="relative z-10 mt-3 text-sm font-semibold">🎉 Bạn đang ở hạng cao nhất!</div>{% endif %}
+  <div class="relative z-10 mt-2 text-[11px] text-white/80">10đ/buổi tập · 8đ/ngày streak · điểm “ăn chuẩn AI” · kết quả giảm cân</div>
+</div>
+<div class="m-sec"><h2>Ví voucher &amp; quà thưởng</h2></div>
+<div class="space-y-3">
+  {% for v in vouchers %}<div class="card p-4 flex items-center gap-3 border-dashed {{ '' if v.usable else 'opacity-50' }}">
+    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent text-white grid place-items-center font-head font-extrabold text-xl flex-none">-{{ v.percent }}%</div>
+    <div class="min-w-0 flex-1"><div class="font-semibold leading-tight">{{ v.title }}</div><div class="text-xs text-muted">Từ {{ v.granted_by.full_name if v.granted_by else COMPANY_NAME }}{% if v.expires_on %} · HSD {{ v.expires_on.strftime('%d/%m/%Y') }}{% endif %}</div>{% if v.message %}<div class="text-xs mt-1 italic">“{{ v.message }}”</div>{% endif %}</div>
+    {% if v.usable %}<a href="{{ url_for('member.shop') }}" class="btn btn-primary btn-sm">Dùng</a>{% else %}<span class="pill bg-slate-100 text-slate-500">{{ 'Đã dùng' if v.used_at else 'Hết hạn' }}</span>{% endif %}</div>
+  {% else %}<div class="card">{{ ui.empty('redeem', 'Chưa có quà nào. Tập đều để nhận ưu đãi từ Coach và Quản lý nhé!') }}</div>{% endfor %}
+</div>
+<div class="m-sec"><h2>Top chị em cơ sở của bạn</h2></div>
+<div class="card p-2">
+  {% for r in board %}<div class="p-2.5 flex items-center gap-3 {{ 'bg-soft/70 rounded-2xl' if r.user.id == current_user.id }}">
+    <span class="w-6 text-center font-head font-bold {{ 'text-amber-500' if loop.index <= 3 else 'text-muted' }}">{{ loop.index }}</span>{{ ui.avatar(r.user, 40) }}
+    <div class="flex-1 min-w-0"><div class="text-sm font-semibold truncate">{{ r.user.full_name }}{{ ' (bạn)' if r.user.id == current_user.id }}</div><div class="text-xs text-muted">🔥 {{ r.user.streak or 0 }} ngày</div></div>{{ ui.rank_badge(r.name) }}<b class="text-sm w-10 text-right">{{ r.score }}</b></div>{% endfor %}
+</div>
+{% endblock %}

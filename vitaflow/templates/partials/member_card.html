@@ -1,0 +1,39 @@
+{# Thẻ hồ sơ hội viên (popup hover): ảnh Before/After, số đo, mục tiêu #}
+{% import "partials/macros.html" as ui %}
+{% set last = summary.last %}{% set first = summary.first %}
+<div class="p-4">
+  <div class="flex items-center gap-3">
+    {{ ui.avatar(m, 52) }}
+    <div class="min-w-0"><div class="font-head font-bold truncate">{{ m.full_name }}</div>
+      <div class="text-xs text-muted">{{ m.member_code }}{% if m.coach %} · Coach {{ m.coach.first_name }}{% endif %}</div>
+      <div class="mt-1 flex gap-1.5 flex-wrap">{{ ui.rank_badge(rank.name) }}<span class="pill bg-orange-100 text-orange-700"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 1">local_fire_department</span>{{ m.streak or 0 }} ngày</span></div></div>
+  </div>
+
+  <div class="mt-4 grid grid-cols-2 gap-2">
+    {% for kind, label, rec in (('before', 'Trước', first), ('after', 'Hiện tại', last)) %}
+      <div>
+        <div class="aspect-[3/4] rounded-xl bg-soft overflow-hidden grid place-items-center text-muted text-xs text-center">
+          {% if photos_hidden %}<span><span class="material-symbols-outlined">lock</span><br>Hội viên chọn chỉ mình tôi xem</span>
+          {% elif photos.get(kind) %}<img src="{{ photos[kind].url }}" class="w-full h-full object-cover" alt="{{ label }}">
+          {% else %}<span><span class="material-symbols-outlined">add_photo_alternate</span><br>Chưa có ảnh</span>{% endif %}
+        </div>
+        <div class="mt-1 text-[11px] text-center text-muted"><b class="text-ink">{{ label }}</b>{% if rec %} · {{ rec.weight_kg }}kg / eo {{ rec.waist_cm }}cm{% endif %}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if last %}
+  <div class="mt-4 grid grid-cols-4 gap-2 text-center">
+    {% for lbl, v, u in (('Cân nặng', last.weight_kg, 'kg'), ('Chiều cao', last.height_cm, 'cm'), ('Vòng eo', last.waist_cm, 'cm'), ('Vòng mông', last.hip_cm, 'cm')) %}
+      <div class="rounded-xl bg-soft/60 py-2"><div class="text-[10px] text-muted">{{ lbl }}</div><div class="font-bold text-sm">{{ v if v else '–' }}<span class="text-[10px] font-medium">{{ u if v }}</span></div></div>
+    {% endfor %}
+  </div>
+  <div class="mt-3 rounded-xl border border-line p-3 text-xs space-y-1.5">
+    <div class="flex justify-between"><span class="text-muted">Lộ trình mục tiêu</span><b>{{ m.goal or 'Chưa đặt' }}</b></div>
+    <div class="flex justify-between"><span class="text-muted">Sau {{ summary.count }} lần đo</span>
+      <b class="{{ 'text-emerald-600' if summary.d_weight <= 0 else 'text-rose-600' }}">{{ summary.d_weight }}kg · eo {{ summary.d_waist }}cm</b></div>
+    <div class="flex justify-between"><span class="text-muted">Điểm xếp hạng</span><b>{{ rank.score }} điểm</b></div>
+    <div class="flex justify-between items-center"><span class="text-muted">Gói Gym</span>{{ ui.status_pill(status.gym.state, status.gym.days if status.gym.state != 'expired' else none) }}</div>
+  </div>
+  {% else %}<p class="mt-4 text-xs text-muted text-center">Hội viên chưa có số đo nào.</p>{% endif %}
+</div>

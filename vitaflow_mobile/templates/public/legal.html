@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ {'privacy':'Chính sách quyền riêng tư','terms':'Điều khoản sử dụng','support':'Hỗ trợ'}[page] }}{% endblock %}
+{% block body %}
+<header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-line"><div class="max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
+  <a href="{{ url_for('public.landing') }}" class="flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-primary text-white grid place-items-center font-head font-extrabold">{{ COMPANY_NAME[:1]|upper }}</span><span class="font-head font-extrabold hidden sm:inline">{{ COMPANY_NAME }}</span></a>
+  <nav class="ml-auto flex gap-3 text-[13px] sm:text-sm font-semibold text-muted whitespace-nowrap"><a href="{{ url_for('public.privacy') }}" class="{{ 'text-primary-dark' if page == 'privacy' }}">Quyền riêng tư</a><a href="{{ url_for('public.terms') }}" class="{{ 'text-primary-dark' if page == 'terms' }}">Điều khoản</a><a href="{{ url_for('public.support') }}" class="{{ 'text-primary-dark' if page == 'support' }}">Hỗ trợ</a></nav></div></header>
+<main class="max-w-3xl mx-auto px-4 py-8 pb-16 leading-relaxed [&_h2]:font-head [&_h2]:font-extrabold [&_h2]:text-xl [&_h2]:mt-8 [&_h2]:mb-2 [&_h1]:font-head [&_h1]:font-extrabold [&_h1]:text-3xl [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_li]:my-1 [&_a]:text-primary-dark [&_a]:underline">
+{% if page == 'privacy' %}
+<h1>Chính sách quyền riêng tư</h1><p class="text-sm text-muted">Cập nhật lần cuối: 11/2026 · Áp dụng cho ứng dụng và website {{ COMPANY_NAME }} (“chúng tôi”).</p>
+<p>Chúng tôi tôn trọng quyền riêng tư của bạn và xử lý dữ liệu cá nhân theo Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân. Chính sách này giải thích chúng tôi thu thập gì, dùng để làm gì và quyền của bạn.</p>
+<h2>1. Dữ liệu chúng tôi thu thập</h2>
+<ul><li><b>Tài khoản:</b> họ tên, email, số điện thoại, mật khẩu (được mã hoá một chiều), cơ sở tập, mã hội viên.</li>
+<li><b>Dữ liệu sức khoẻ và thể trạng (dữ liệu nhạy cảm):</b> cân nặng, chiều cao, số đo ba vòng, tỷ lệ mỡ, mục tiêu tập luyện, ảnh tiến trình Before/After, nhật ký bữa ăn và ảnh mâm cơm, lượng nước uống, chế độ “kỳ nghỉ sinh lý”. Chúng tôi chỉ xử lý dữ liệu này khi bạn chủ động nhập và đồng ý.</li>
+<li><b>Hoạt động tập luyện:</b> lịch đặt chỗ, điểm danh (QR), chuỗi chuyên cần, hạng thành viên, gói tập và lịch sử nạp gói.</li>
+<li><b>Nội dung bạn tạo:</b> bài viết, bình luận, tin nhắn với Coach/Quản lý/nhóm ca và hình ảnh đính kèm.</li>
+<li><b>Dữ liệu thiết bị:</b> mã thông báo đẩy (push token) nếu bạn cho phép nhận thông báo; nhật ký kỹ thuật cơ bản phục vụ bảo mật.</li></ul>
+<h2>2. Mục đích sử dụng</h2>
+<ul><li>Cung cấp dịch vụ phòng tập: đặt chỗ, điểm danh, theo dõi tiến độ, quản lý gói tập và thanh toán.</li>
+<li>Để Coach được phân công hỗ trợ bạn (xem số đo, nhật ký ăn uống, tin nhắn). Ảnh Before/After chỉ hiển thị cho Quản lý và Coach khi bạn chọn “Tôi &amp; Coach”; chọn “Chỉ mình tôi” thì không ai khác thấy.</li>
+<li>Gợi ý thực đơn bằng AI, gửi thông báo nhắc lịch/quà tặng, kiểm duyệt nội dung vi phạm và bảo vệ an toàn hệ thống.</li></ul>
+<h2>3. Chia sẻ dữ liệu</h2>
+<p>Chúng tôi không bán dữ liệu cá nhân. Dữ liệu chỉ được chia sẻ trong phạm vi cần thiết với:</p>
+<ul><li><b>Coach và Quản lý</b> của phòng tập (theo phân quyền trong ứng dụng).</li>
+<li><b>Nhà cung cấp dịch vụ xử lý thay chúng tôi:</b> Google (API Gemini) khi bạn tạo thực đơn AI — chỉ gửi tuổi, chiều cao, cân nặng, mức vận động, mục tiêu và ghi chú ăn uống, <u>không</u> gửi họ tên/email; Google Firebase Cloud Messaging/Apple APNs để gửi thông báo đẩy; dịch vụ VietQR để tạo mã chuyển khoản (nhận số tiền và nội dung chuyển khoản); Google Fonts và jsDelivr để tải phông chữ/thư viện giao diện.</li>
+<li>Cơ quan nhà nước có thẩm quyền khi pháp luật yêu cầu.</li></ul>
+<h2>4. Thời gian lưu trữ và xoá dữ liệu</h2>
+<p>Chúng tôi lưu dữ liệu trong thời gian tài khoản còn hoạt động. Bạn có thể <b>tự xoá tài khoản và toàn bộ dữ liệu</b> ngay trong ứng dụng: Hồ sơ → Quyền riêng tư &amp; tài khoản → Xoá tài khoản. Việc xoá có hiệu lực ngay và không thể khôi phục. Một số thông tin có thể được giữ lại ngoài hệ thống ứng dụng nếu pháp luật yêu cầu (ví dụ chứng từ kế toán).</p>
+<h2>5. Quyền của bạn</h2>
+<p>Bạn có quyền truy cập, chỉnh sửa, xoá dữ liệu, rút lại sự đồng ý, hạn chế hoặc phản đối việc xử lý, và khiếu nại. Hãy liên hệ <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>; chúng tôi phản hồi trong vòng 72 giờ làm việc.</p>
+<h2>6. Bảo mật</h2>
+<p>Mật khẩu được băm, kết nối được mã hoá (HTTPS), quyền truy cập được phân tách theo vai trò Quản lý/Coach/Thành viên. Không hệ thống nào an toàn tuyệt đối; nếu có sự cố ảnh hưởng đến dữ liệu của bạn, chúng tôi sẽ thông báo theo quy định.</p>
+<h2>7. Trẻ em</h2><p>Dịch vụ dành cho người từ 18 tuổi trở lên. Chúng tôi không cố ý thu thập dữ liệu của người dưới 18 tuổi.</p>
+<h2>8. Thay đổi chính sách</h2><p>Khi có thay đổi quan trọng, chúng tôi sẽ thông báo trong ứng dụng. Liên hệ: {{ COMPANY_NAME }} · <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a> · {{ SUPPORT_PHONE }}.</p>
+
+{% elif page == 'terms' %}
+<h1>Điều khoản sử dụng</h1><p class="text-sm text-muted">Cập nhật lần cuối: 11/2026</p>
+<p>Khi tạo tài khoản và sử dụng {{ COMPANY_NAME }}, bạn đồng ý với các điều khoản dưới đây.</p>
+<h2>1. Tài khoản</h2><p>Bạn cung cấp thông tin chính xác, giữ bí mật mật khẩu và chịu trách nhiệm về hoạt động trong tài khoản. Dịch vụ dành cho người từ 18 tuổi.</p>
+<h2>2. Nội dung do người dùng tạo — không khoan nhượng với nội dung vi phạm</h2>
+<p>Bạn không được đăng hoặc gửi nội dung: khiêu dâm/khoả thân; bạo lực, đe doạ, quấy rối, bắt nạt; phân biệt đối xử hoặc thù ghét; kỳ thị ngoại hình, body-shaming; lan truyền thông tin sai lệch về sức khoẻ, quảng bá chế độ ăn kiêng cực đoan hoặc chất cấm; spam, quảng cáo trái phép; xâm phạm quyền riêng tư (đăng ảnh/thông tin người khác khi chưa được đồng ý); hoặc vi phạm pháp luật.</p>
+<p>Mọi người dùng có thể <b>báo cáo</b> bài viết/bình luận (biểu tượng cờ) và <b>chặn</b> người dùng khác. Quản lý xem xét báo cáo trong vòng 24 giờ, có thể gỡ nội dung và khoá tài khoản vi phạm mà không cần báo trước.</p>
+<h2>3. Sức khoẻ và thực đơn AI</h2><p>Gợi ý dinh dưỡng, bài tập và chỉ số (BMR/TDEE) chỉ mang tính tham khảo, <b>không thay thế tư vấn của bác sĩ hoặc chuyên gia dinh dưỡng</b>. Hãy tham khảo ý kiến chuyên môn nếu bạn có bệnh lý, đang mang thai/cho con bú hoặc có tiền sử rối loạn ăn uống. Dừng tập và liên hệ cơ sở y tế nếu có dấu hiệu bất thường.</p>
+<h2>4. Gói tập và thanh toán</h2><p>Gói Gym/Coach/Combo được thanh toán bằng chuyển khoản ngân hàng và được Quản lý xác nhận thủ công; ngày tập mới được cộng dồn vào hạn hiện tại. Bảo lưu thẻ cần Quản lý duyệt. Chính sách hoàn tiền áp dụng theo hợp đồng/quy định của phòng tập tại thời điểm đăng ký. Dịch vụ phòng tập được sử dụng trực tiếp tại cơ sở, không phải nội dung số trong ứng dụng.</p>
+<h2>5. Chấm dứt</h2><p>Bạn có thể xoá tài khoản bất kỳ lúc nào trong ứng dụng. Chúng tôi có thể tạm khoá hoặc chấm dứt tài khoản vi phạm điều khoản.</p>
+<h2>6. Giới hạn trách nhiệm</h2><p>Trong phạm vi pháp luật cho phép, chúng tôi không chịu trách nhiệm về thiệt hại gián tiếp phát sinh từ việc sử dụng ứng dụng hoặc làm theo gợi ý trong ứng dụng khi không có tư vấn chuyên môn.</p>
+<h2>7. Luật áp dụng</h2><p>Điều khoản này tuân theo pháp luật Việt Nam. Liên hệ: <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.</p>
+
+{% else %}
+<h1>Hỗ trợ</h1><p>Chúng tôi luôn sẵn sàng hỗ trợ bạn.</p>
+<ul><li>Email: <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a></li><li>Hotline: {{ SUPPORT_PHONE }}</li><li>Đơn vị vận hành: {{ COMPANY_NAME }}</li></ul>
+<h2>Báo cáo nội dung vi phạm</h2><p>Trong bảng tin, bấm biểu tượng <b>cờ</b> cạnh bài viết hoặc bình luận để báo cáo; bấm biểu tượng <b>chặn</b> để không còn thấy nội dung của người đó. Báo cáo được Quản lý xem xét trong vòng 24 giờ.</p>
+<h2 id="xoa-tai-khoan">Xoá tài khoản và dữ liệu</h2><p>Hồ sơ → Quyền riêng tư &amp; tài khoản → <b>Xoá tài khoản của tôi</b>. Nếu không đăng nhập được, hãy email cho chúng tôi từ địa chỉ đã đăng ký.</p>
+<h2>Câu hỏi thường gặp</h2><ul><li><b>Quên mật khẩu?</b> Liên hệ Quản lý cơ sở hoặc email hỗ trợ để được đặt lại.</li><li><b>Đã chuyển khoản nhưng chưa được cộng ngày?</b> Quản lý xác nhận thủ công trong giờ làm việc; hãy giữ nguyên nội dung chuyển khoản.</li></ul>
+{% endif %}
+</main>
+{% endblock %}

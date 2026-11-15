@@ -1,0 +1,70 @@
+{% extends "m/layout.html" %}
+{% block title %}Trạm quét QR{% endblock %}
+{% block content %}
+{% if not sel %}<div class="card">{{ ui.empty('event_busy', 'Bạn chưa được gán ca nào. Liên hệ Quản lý để được phân ca.') }}</div>
+{% else %}
+<div id="checkin-root" data-shift="{{ sel.id }}"></div>
+<div class="chips">
+  {% for s in shifts %}<a href="{{ url_for('coach.checkin', shift=s.id) }}" class="chip flex items-center gap-1.5 {{ 'on' if s.id == sel.id }}">{% if states[s.id] == 'live' %}<span class="live-dot"></span>{% endif %}{{ s.name }} ({{ s.start.strftime('%H:%M') }}-{{ s.end.strftime('%H:%M') }})</a>{% endfor %}
+</div>
+
+<button id="btn-privacy" type="button" class="card mt-3 p-4 w-full flex items-center gap-3 text-left">
+  <span class="w-11 h-11 rounded-2xl bg-soft text-primary-dark grid place-items-center"><span class="material-symbols-outlined">shield_lock</span></span>
+  <span class="flex-1"><span class="block font-semibold">Chế độ Kiosk riêng tư</span><span class="block text-xs text-muted">Ẩn danh sách cá nhân, chỉ hiện mã QR để học viên tự quét</span></span>
+  <span class="w-12 h-7 rounded-full bg-slate-300 relative"><span class="absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow"></span></span></button>
+
+<div class="card mt-3 p-5 text-center">
+  <span class="pill bg-soft text-primary-dark">Cổng điểm danh tự động</span>
+  <h2 class="font-head text-lg font-extrabold mt-2">Mã QR check-in {{ sel.name }}</h2>
+  <div class="relative mx-auto mt-3 w-64 max-w-full p-4 rounded-3xl border-2 border-dashed border-primary/40 bg-white"><div id="qr-holder" class="qr-box min-h-[190px] grid place-items-center text-muted text-sm">Đang tạo mã…</div></div>
+  <div class="mt-2 text-xs text-muted">Mã tự đổi sau: <b id="qr-count" class="font-mono text-primary-dark">--</b>s</div>
+  <p class="mt-1 text-xs text-muted">Học viên mở ứng dụng {{ COMPANY_NAME }}, bật camera quét mã để điểm danh.</p>
+</div>
+
+<div class="card mt-3 p-4">
+  <h3 class="font-head font-bold flex items-center gap-2"><span class="material-symbols-outlined text-primary">qr_code_scanner</span>Quét mã của học viên</h3>
+  <div id="reader" class="mt-3 rounded-2xl overflow-hidden hidden"></div>
+  <button id="btn-camera" type="button" class="btn btn-ghost w-full mt-3"><span class="material-symbols-outlined text-[18px]">photo_camera</span>Bật camera quét QR cá nhân</button>
+  <form id="manual-form" class="mt-3 flex gap-2"><input id="manual-code" class="input" placeholder="Nhập mã hội viên: HV-102" autocomplete="off" autocapitalize="characters"><button class="btn btn-primary">Điểm danh</button></form>
+  <div id="scan-result" class="mt-3 text-sm hidden rounded-xl p-3"></div>
+</div>
+
+<div class="grid grid-cols-3 gap-2 mt-3 text-center">
+  <div class="card p-3"><div class="text-[11px] text-muted">Đã đến</div><div class="font-head text-xl font-extrabold">{{ stats.in }}<span class="text-xs text-muted">/{{ stats.expected }}</span></div></div>
+  <div class="card p-3"><div class="text-[11px] text-muted">HV của tôi</div><div class="font-head text-xl font-extrabold">{{ stats.mine_in }}</div></div>
+  <div class="card p-3"><div class="text-[11px] text-muted">Cảnh báo hạn</div><div class="font-head text-xl font-extrabold text-rose-600">{{ alerts|length }}</div></div>
+</div>
+
+<div class="m-sec"><h2>Đối soát điểm danh</h2></div>
+<div class="seg" id="ck-seg"><button type="button" class="on" data-p="done">Đã điểm danh ({{ done|length }})</button><button type="button" data-p="alert">Cảnh báo hạn ({{ alerts|length }})</button></div>
+<div id="p-done" class="mt-3 space-y-2">
+  {% for c in done %}<div class="card p-3 flex items-center gap-3">{{ ui.avatar(c.user, 42) }}
+    <div class="min-w-0 flex-1"><div class="font-semibold text-sm truncate">{{ c.user.full_name }} <span class="text-xs text-muted font-normal">{{ c.user.member_code }}</span></div><div class="text-xs text-muted">{{ c.at.strftime('%H:%M:%S') }} · {{ 'quét camera' if c.method == 'scan' else 'QR ca' }}</div></div>
+    <span class="pill bg-emerald-100 text-emerald-700">Thành công</span></div>
+  {% else %}<div class="card">{{ ui.empty('hourglass_empty', 'Chưa có ai điểm danh ca này.') }}</div>{% endfor %}
+</div>
+<div id="p-alert" class="mt-3 space-y-2 hidden">
+  {% for m, st in alerts %}<div class="card p-3 {{ 'bg-red-50/70' if st.gym.state in ('expired','none') else 'bg-amber-50/70' }}">
+    <div class="flex items-center gap-3">{{ ui.avatar(m, 42) }}<div class="min-w-0 flex-1"><div class="text-sm font-semibold">{{ m.full_name }} <span class="text-xs text-muted font-normal">{{ m.member_code }}</span></div>
+      <div class="text-xs text-muted">Gym: {{ 'đã hết hạn' if st.gym.state in ('expired','none') else 'còn ' ~ st.gym.days ~ ' ngày' }}{% if m.coach_expires %} · Coach: {{ 'hết hạn' if st.coach.state == 'expired' else 'còn ' ~ st.coach.days ~ ' ngày' }}{% endif %}</div></div></div>
+    <div class="mt-2 grid grid-cols-2 gap-2"><a href="{{ url_for('coach.rewards') }}" class="btn btn-ghost btn-sm"><span class="material-symbols-outlined text-[16px]">redeem</span>Gửi ưu đãi</a><a href="{{ url_for('coach.nutrition', peer=m.id) }}" class="btn btn-outline btn-sm"><span class="material-symbols-outlined text-[16px]">chat</span>Nhắn nhắc</a></div></div>
+  {% else %}<div class="card">{{ ui.empty('verified', 'Học viên của bạn đều còn hạn dài.') }}</div>{% endfor %}
+</div>
+
+<!-- Privacy Mode: che toàn bộ thông tin nhạy cảm, chỉ còn mã QR -->
+<div id="privacy" class="hidden fixed inset-0 z-[150] bg-white flex-col items-center justify-center p-6 text-center">
+  <div class="font-head font-extrabold text-2xl tracking-tight">{{ COMPANY_NAME }}</div>
+  <div class="text-primary-dark font-semibold mt-1">{{ sel.name }} · {{ sel.start.strftime('%H:%M') }}-{{ sel.end.strftime('%H:%M') }}</div>
+  <div id="privacy-qr" class="qr-box w-[min(84vw,400px)] mt-6"></div>
+  <p class="mt-4 text-muted">Mở ứng dụng {{ COMPANY_NAME }} và quét mã để điểm danh</p>
+  <div id="privacy-clock" class="mt-2 font-head text-4xl font-extrabold"></div>
+  <button id="btn-exit" type="button" class="mt-8 btn btn-outline"><span class="material-symbols-outlined text-[18px]">lock_open</span>Thoát chế độ riêng tư</button>
+</div>
+{% call ui.modal('m-exit', 'Nhập mật khẩu để thoát') %}
+  <form id="exit-form" class="space-y-3"><input id="exit-pass" type="password" class="input" placeholder="Mật khẩu Coach" required><button class="btn btn-primary w-full">Mở khoá</button><p id="exit-err" class="text-sm text-rose-600 hidden">Mật khẩu chưa đúng.</p></form>
+{% endcall %}
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if sel %}<script src="{{ url_for('static', filename='js/checkin.js') }}"></script>
+<script>document.querySelectorAll('#ck-seg button').forEach(b => b.onclick = () => { document.querySelectorAll('#ck-seg button').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('p-done').classList.toggle('hidden', b.dataset.p !== 'done'); document.getElementById('p-alert').classList.toggle('hidden', b.dataset.p !== 'alert'); });</script>{% endif %}{% endblock %}

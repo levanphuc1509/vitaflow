@@ -1,0 +1,50 @@
+{% macro avatar(u, size=40) %}
+  {% if u.avatar_url %}<img src="{{ u.avatar_url }}" alt="" class="avatar object-cover" style="width:{{ size }}px;height:{{ size }}px">
+  {% else %}<span class="avatar" style="width:{{ size }}px;height:{{ size }}px;font-size:{{ (size * 0.36)|int }}px;background:hsl({{ (u.id * 47) % 360 }} 70% 90%);color:hsl({{ (u.id * 47) % 360 }} 45% 28%)">{{ u.initials }}</span>{% endif %}
+{% endmacro %}
+
+{% macro rank_badge(name) %}
+  {% set c = {'Diamond':('bg-sky-100 text-sky-700','diamond'),'Gold':('bg-amber-100 text-amber-700','workspace_premium'),
+              'Silver':('bg-slate-100 text-slate-600','military_tech'),'Bronze':('bg-orange-100 text-orange-700','shield')}[name] %}
+  <span class="pill {{ c[0] }}"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 1">{{ c[1] }}</span>{{ name }}</span>
+{% endmacro %}
+
+{% macro status_pill(state, days=None) %}
+  {% if state == 'active' %}<span class="pill bg-emerald-100 text-emerald-700">Còn hạn{{ ' · %d ngày'|format(days) if days is not none }}</span>
+  {% elif state == 'expiring' %}<span class="pill bg-amber-100 text-amber-700">Sắp hết hạn{{ ' · %d ngày'|format(days) if days is not none }}</span>
+  {% elif state == 'expired' %}<span class="pill bg-red-100 text-red-700">Hết hạn</span>
+  {% else %}<span class="pill bg-slate-100 text-slate-600">Chưa có gói</span>{% endif %}
+{% endmacro %}
+
+{% macro modal(id, title, wide=False) %}
+<div id="{{ id }}" class="modal hidden" role="dialog" aria-modal="true" aria-label="{{ title }}">
+  <div class="modal-backdrop" data-modal-close></div>
+  <div class="modal-panel {{ 'max-w-2xl' if wide else 'max-w-md' }}">
+    <div class="flex items-center justify-between mb-4"><h3 class="font-head font-bold text-lg">{{ title }}</h3>
+      <button type="button" data-modal-close class="icon-btn" aria-label="Đóng"><span class="material-symbols-outlined">close</span></button></div>
+    {{ caller() }}
+  </div>
+</div>
+{% endmacro %}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro empty(icon, text) %}
+<div class="text-center py-10 text-muted"><span class="material-symbols-outlined text-5xl opacity-40">{{ icon }}</span><p class="mt-2 text-sm">{{ text }}</p></div>
+{% endmacro %}
+
+{% macro stat(icon, label, value, sub='') %}
+<div class="card p-5"><div class="flex items-center justify-between"><span class="text-sm text-muted">{{ label }}</span>
+  <span class="w-9 h-9 rounded-xl bg-soft text-primary-dark grid place-items-center"><span class="material-symbols-outlined text-[20px]">{{ icon }}</span></span></div>
+  <div class="mt-2 font-head text-3xl font-extrabold tracking-tight">{{ value }}</div>{% if sub %}<div class="text-xs text-muted mt-1">{{ sub }}</div>{% endif %}</div>
+{% endmacro %}
+
+{% macro branch_filter(sel) %}
+<form method="get" class="inline-flex items-center gap-2 card px-3 py-2">
+  <span class="material-symbols-outlined text-primary text-[20px]">storefront</span>
+  <select name="branch" class="bg-transparent text-sm font-semibold outline-none cursor-pointer" onchange="this.form.submit()">
+    <option value="0">Tất cả cơ sở</option>
+    {% for b in branches %}<option value="{{ b.id }}" {{ 'selected' if sel == b.id }}>{{ b.name }}</option>{% endfor %}
+  </select>
+</form>
+{% endmacro %}
